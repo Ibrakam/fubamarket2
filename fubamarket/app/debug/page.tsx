@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useProductFilters } from "@/hooks/use-product-filters"
+import API_ENDPOINTS from "@/lib/api-config"
 
 export default function DebugPage() {
   const { filteredProducts: apiProducts, loading } = useProductFilters()
@@ -11,7 +12,7 @@ export default function DebugPage() {
   useEffect(() => {
     const fetchDirect = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/products")
+        const response = await fetch(API_ENDPOINTS.PRODUCTS)
         const data = await response.json()
         setDirectFetch(data)
       } catch (error) {

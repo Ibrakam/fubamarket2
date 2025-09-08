@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 export default function TestPage() {
   const [products, setProducts] = useState([])
@@ -12,7 +13,7 @@ export default function TestPage() {
     setError("")
     try {
       console.log("Testing API...")
-      const response = await fetch("http://127.0.0.1:8000/api/products")
+      const response = await fetch(API_ENDPOINTS.PRODUCTS)
       console.log("Response status:", response.status)
       const data = await response.json()
       console.log("Response data:", data)

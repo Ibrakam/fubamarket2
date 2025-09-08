@@ -11,6 +11,7 @@ import { Search, Filter, Download, Eye, Edit, UserPlus, Shield, User, Building }
 import { UserDetailsModal } from "@/components/user-details-modal"
 import { EditUserModal } from "@/components/edit-user-modal"
 import { AddUserModal } from "@/components/add-user-modal"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface User {
   id: number
@@ -50,7 +51,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/admin/users', {
+      const response = await fetch(API_ENDPOINTS.ADMIN_USERS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

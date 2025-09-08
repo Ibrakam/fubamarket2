@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Package, ShoppingCart, DollarSign, ArrowRight, Plus } from "lucide-react"
 import Link from "next/link"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface VendorStats {
   user: {
@@ -49,7 +50,7 @@ export default function VendorDashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/vendor/me", {
+      const response = await fetch(API_ENDPOINTS.PROFILE, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

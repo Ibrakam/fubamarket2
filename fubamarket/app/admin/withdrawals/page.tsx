@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Download, Eye, Check, X, DollarSign, Clock, AlertCircle } from "lucide-react"
 import { WithdrawalProcessModal } from "@/components/withdrawal-process-modal"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface WithdrawalRequest {
   id: number
@@ -46,7 +47,7 @@ export default function AdminWithdrawalsPage() {
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/admin/withdrawals', {
+      const response = await fetch(API_ENDPOINTS.ADMIN_WITHDRAWALS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

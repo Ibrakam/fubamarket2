@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Download, Eye, Edit, Package, Truck, CheckCircle, AlertCircle } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface Order {
   id: number
@@ -54,7 +55,7 @@ export default function OpsOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/ops/orders', {
+      const response = await fetch(API_ENDPOINTS.OPS_ORDERS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

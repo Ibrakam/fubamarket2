@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Plus, Edit, Eye, Package, DollarSign, TrendingUp } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface Product {
   id: number
@@ -47,7 +48,7 @@ export default function VendorProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/vendor/products', {
+      const response = await fetch(API_ENDPOINTS.VENDOR_PRODUCTS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -66,7 +67,7 @@ export default function VendorProductsPage() {
 
   const toggleProductStatus = async (productId: number, isActive: boolean) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/vendor/products/${productId}/toggle-status`, {
+      const response = await fetch(`${API_ENDPOINTS.VENDOR_PRODUCTS}/${productId}/toggle-status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Search, Filter, Download, Eye, Edit } from "lucide-react"
 import { OrderStatusModal } from "@/components/order-status-modal"
 import { OrderDetailsModal } from "@/components/order-details-modal"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface Order {
   id: number
@@ -57,7 +58,7 @@ export default function AdminOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/admin/orders', {
+      const response = await fetch(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
