@@ -23,7 +23,7 @@ import API_ENDPOINTS from "@/lib/api-config"
     sed -i 's|'\''http://127\.0\.0\.1:8000/api/|API_ENDPOINTS.|g' "$file"
     sed -i 's|`http://127\.0\.0\.1:8000/api/|`API_ENDPOINTS.|g' "$file"
     
-    # Fix specific endpoint mappings (simplified for Ubuntu)
+    # Fix specific endpoint mappings (without complex variable substitutions)
     sed -i 's|API_ENDPOINTS\.admin/withdrawals$|API_ENDPOINTS.ADMIN_WITHDRAWALS|g' "$file"
     sed -i 's|API_ENDPOINTS\.admin/orders$|API_ENDPOINTS.ADMIN_ORDERS|g' "$file"
     sed -i 's|API_ENDPOINTS\.admin/users$|API_ENDPOINTS.ADMIN_USERS|g' "$file"

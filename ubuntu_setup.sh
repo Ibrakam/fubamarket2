@@ -26,10 +26,14 @@ echo -e "${YELLOW}📋 Step 1: Converting shell scripts for Ubuntu...${NC}"
 
 echo ""
 echo -e "${YELLOW}📋 Step 2: Fixing all hardcoded API URLs...${NC}"
-./fix_all_urls_ubuntu.sh
+./fix_urls_ubuntu_fixed.sh
 
 echo ""
-echo -e "${YELLOW}📋 Step 3: Checking for remaining issues...${NC}"
+echo -e "${YELLOW}📋 Step 3: Fixing linter errors...${NC}"
+./fix_specific_errors.sh
+
+echo ""
+echo -e "${YELLOW}📋 Step 4: Checking for remaining issues...${NC}"
 
 # Check for remaining hardcoded URLs
 remaining=$(grep -r "http://127\.0\.0\.1:8000" fubamarket --include="*.tsx" --include="*.ts" | grep -v "api-config.ts" | wc -l)
