@@ -428,7 +428,7 @@ def create_order(request):
     """Создание нового заказа"""
     try:
         data = request.data
-        user = request.user
+    user = request.user
         
         # Валидация данных
         if not data.get('items') or not isinstance(data['items'], list):
