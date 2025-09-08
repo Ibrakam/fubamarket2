@@ -12,14 +12,14 @@ fix_file() {
     # Add import if not exists
     if ! grep -q "import API_ENDPOINTS" "$file"; then
         # Find the last import line and add our import after it
-        sed -i '' '/^import.*from.*$/a\
+        sed -i '/^import.*from.*$/a\
 import API_ENDPOINTS from "@/lib/api-config"
 ' "$file"
     fi
     
     # Replace common patterns
-    sed -i '' 's|"http://127\.0\.0\.1:8000/api/|API_ENDPOINTS.|g' "$file"
-    sed -i '' 's|'http://127\.0\.0\.1:8000/api/|API_ENDPOINTS.|g' "$file"
+    sed -i 's|"http://127\.0\.0\.1:8000/api/|API_ENDPOINTS.|g' "$file"
+    sed -i 's|'http://127\.0\.0\.1:8000/api/|API_ENDPOINTS.|g' "$file"
     
     # Fix specific endpoints
     sed -i '' 's|API_ENDPOINTS\.auth/login|API_ENDPOINTS.LOGIN|g' "$file"

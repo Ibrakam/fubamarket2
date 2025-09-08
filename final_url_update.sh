@@ -12,7 +12,7 @@ update_file() {
     # Add import if not exists
     if ! grep -q "import API_ENDPOINTS" "$file"; then
         # Find the last import line and add our import after it
-        sed -i '' '/^import.*from.*$/a\
+        sed -i '/^import.*from.*$/a\
 import API_ENDPOINTS from "@/lib/api-config"
 ' "$file"
     fi
