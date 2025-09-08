@@ -33,6 +33,10 @@ echo -e "${YELLOW}📋 Step 3: Fixing linter errors...${NC}"
 ./fix_specific_errors.sh
 
 echo ""
+echo -e "${YELLOW}📋 Step 3.5: Fixing JavaScript apostrophes...${NC}"
+./quick_fix_apostrophes.sh
+
+echo ""
 echo -e "${YELLOW}📋 Step 4: Checking for remaining issues...${NC}"
 
 # Check for remaining hardcoded URLs

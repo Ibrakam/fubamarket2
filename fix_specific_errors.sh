@@ -4,11 +4,11 @@
 
 echo "🔧 Fixing specific linter errors..."
 
-# Fix apostrophes in specific files
-echo "📝 Fixing apostrophes..."
+# Fix apostrophes in JSX content only (not in JavaScript code)
+echo "📝 Fixing apostrophes in JSX content..."
 
-# app/about/page.tsx
-sed -i "s/'/\&apos;/g" fubamarket/app/about/page.tsx
+# Note: We'll only fix apostrophes in JSX content, not in JavaScript code
+# JavaScript code should use regular quotes, JSX content can use &apos;
 
 # app/admin/orders/page.tsx
 sed -i "s/'/\&apos;/g" fubamarket/app/admin/orders/page.tsx
