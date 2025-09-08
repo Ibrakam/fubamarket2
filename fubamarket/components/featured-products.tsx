@@ -1,0 +1,99 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { getProductImage } from "@/lib/product-images"
+import { ProductCard } from "@/components/product-card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import API_ENDPOINTS from "@/lib/api-config"
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  image: string
+  category: string
+  rating: number
+  inStock: boolean
+}
+
+export function FeaturedProducts() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.FEATURED_PRODUCTS)
+        if (response.ok) {
+          const data = await response.json()
+          // Преобразуем данные API в формат Product
+          const formattedProducts = data.map((product: any) => {
+            // Используем реальные фотографии продукта, если они есть
+            let productImage = ""
+            if (product.photos && Array.isArray(product.photos) && product.photos.length > 0) {
+              // Если есть фотографии, используем первую
+              const firstPhoto = product.photos[0]
+              if (firstPhoto.url) {
+                productImage = firstPhoto.url
+              }
+            }
+            
+            // Если нет реальных фотографий, используем дефолтную функцию
+            if (!productImage) {
+              productImage = getProductImage(product.title || product.name || "Untitled Product", String(product.id))
+            }
+            
+            return {
+              id: String(product.id),
+              name: product.title || product.name || "Untitled Product",
+              price: (Number(product.price_uzs) || 0) / 100,
+              image: productImage,
+              category: product.category || "",
+              rating: 5,
+              inStock: product.is_active || true,
+              photos: product.photos || [] // Store photos data
+            }
+          })
+          setProducts(formattedProducts)
+        } else {
+          console.error('Failed to fetch featured products:', response.status)
+        }
+      } catch (error) {
+        console.error("Error fetching featured products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFeaturedProducts()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="bg-gray-200 h-64 rounded-lg mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onQuickView={(product) => console.log("Quick view:", product)}
+        />
+      ))}
+    </div>
+  )
+}
