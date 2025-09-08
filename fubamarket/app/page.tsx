@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/product-card"
 import { useProductFilters } from "@/hooks/use-product-filters"
 import { FeaturedProducts } from "@/components/featured-products"
 import { LatestReviews } from "@/components/latest-reviews"
-import { Search, Star, Truck, Shield, RotateCcw, Heart, Store, ShoppingBag, Gift, Sparkles } from "lucide-react"
+import { Search, Truck, Shield, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
