@@ -1,0 +1,10 @@
+npm ERR! code ENOENT
+npm ERR! syscall open
+npm ERR! path D:\fubamarket2\package.json
+npm ERR! errno -4058
+npm ERR! enoent ENOENT: no such file or directory, open 'D:\fubamarket2\package.json'
+npm ERR! enoent This is related to npm not being able to find a file.
+npm ERR! enoent 
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     C:\Users\User\AppData\Roaming\npm-cache\_logs\2025-09-09T02_44_29_766Z-debug.log
