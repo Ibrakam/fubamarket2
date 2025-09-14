@@ -1,67 +1,62 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
-from . import product_views
 
 urlpatterns = [
-    # Health check
-    path('health', views.health),
-
-    # Authentication
-    path('auth/register', views.register),
-    path('auth/login', views.login),
-    path('auth/profile', views.profile),
-    path('auth/change-password', views.change_password),
-
-    # Products
-    path('products', views.list_products),
-    path('products/featured', views.get_featured_products, name='get_featured_products'),
-    path('products/<int:id>', views.get_product_by_id),
-    path('products/<slug:slug>', views.get_product),
-    path('categories', product_views.get_categories),
-
-    # Vendor endpoints
-    path('vendor/me', views.vendor_me),
-    path('vendor/products', views.vendor_products),
-    path('vendor/products/<int:product_id>', product_views.vendor_get_product),
-    path('vendor/products/create', product_views.vendor_create_product),
-    path('vendor/products/<int:product_id>/update', product_views.vendor_update_product),
-    path('vendor/products/<int:product_id>/toggle-status', views.toggle_product_status),
-    path('vendor/orders', views.vendor_orders),
-    path('vendor/orders/<int:order_id>/status', views.update_order_status),
-    path('vendor/withdrawals', views.vendor_withdrawals),
-    path('vendor/withdrawals/create', views.create_withdrawal_request),
-
-    # Admin endpoints
-    path('admin/dashboard', views.admin_dashboard),
+    # Реферальная программа
+    path('referral-programs/', views.ReferralProgramListCreateView.as_view(), name='referral-program-list'),
+    path('referral-programs/<int:pk>/', views.ReferralProgramDetailView.as_view(), name='referral-program-detail'),
     
-    # Public endpoints
-    path('stats', views.public_stats, name='public_stats'),
-    path('admin/users', views.admin_users),
-    path('admin/users/create', views.admin_create_user),
-    path('admin/users/<int:user_id>', views.admin_update_user),
-    path('admin/orders', views.admin_orders),
-    path('admin/orders/<int:order_id>/status', views.admin_update_order_status),
-    path('admin/withdrawals', views.admin_withdrawals),
-    path('admin/withdrawals/<int:withdrawal_id>/process', views.process_withdrawal),
-
-    # Ops endpoints
-    path('ops/orders', views.ops_orders),
-    path('ops/orders/<int:order_id>/status', views.ops_update_order_status),
-    path('ops/withdrawals', views.ops_withdrawals),
-    path('ops/withdrawals/<int:withdrawal_id>/process', views.ops_process_withdrawal),
-
-    # Orders
-    path('orders/create', views.create_order),
-
-    # Reviews
-    path('reviews/product/<int:product_id>', views.get_reviews, name='get_reviews'),
-    path('reviews/create', views.create_review, name='create_review'),
-    path('reviews/latest', views.get_latest_reviews, name='get_latest_reviews'),
-
-
-
-    # Legacy endpoints (for backward compatibility)
-    path('orders', views.create_order),
-    path('checkout/<str:public_id>/payme', views.checkout_payme),
-    path('payments/payme/callback', views.payme_webhook),
+    # Реферальные ссылки
+    path('referral-links/', views.ReferralLinkListCreateView.as_view(), name='referral-link-list-create'),
+    path('referral-links/<int:pk>/', views.ReferralLinkDetailView.as_view(), name='referral-link-detail'),
+    path('referral-links/<int:pk>/stats/', views.ReferralLinkStatsView.as_view(), name='referral-link-stats'),
+    
+    # Отслеживание посещений (публичный endpoint)
+    path('track-visit/', views.track_referral_visit, name='track-referral-visit'),
+    
+    # Реферальные вознаграждения
+    path('referral-rewards/', views.ReferralRewardListView.as_view(), name='referral-reward-list'),
+    path('referral-rewards/<int:pk>/', views.ReferralRewardUpdateView.as_view(), name='referral-reward-update'),
+    path('process-purchase/', views.process_referral_purchase, name='process-referral-purchase'),
+    
+    # Выплаты
+    path('referral-payouts/', views.ReferralPayoutListCreateView.as_view(), name='referral-payout-list-create'),
+    path('referral-payouts/<int:pk>/', views.ReferralPayoutDetailView.as_view(), name='referral-payout-detail'),
+    
+    # Баланс
+    path('referral-balance/', views.ReferralBalanceView.as_view(), name='referral-balance'),
+    
+    # Статистика
+    path('referral-stats/', views.referral_stats, name='referral-stats'),
+    
+    # Админские маршруты
+    path('admin/referral-rewards/', views.AdminReferralRewardListView.as_view(), name='admin-referral-reward-list'),
+    path('admin/referral-rewards/<int:pk>/', views.AdminReferralRewardUpdateView.as_view(), name='admin-referral-reward-update'),
+    path('admin/referral-payouts/', views.AdminReferralPayoutListView.as_view(), name='admin-referral-payout-list'),
+    path('admin/referral-payouts/<int:pk>/', views.AdminReferralPayoutUpdateView.as_view(), name='admin-referral-payout-update'),
+    
+    # Product Management - только для админов
+    path('products/', views.ProductListCreateView.as_view(), name='product-list'),
+    path('products/<int:pk>/', views.ProductDetailView.as_view(), name='product-detail'),
+    
+    # Product Images - только для админов
+    path('product-images/', views.ProductImageListCreateView.as_view(), name='product-image-list-create'),
+    path('product-images/<int:pk>/', views.ProductImageDetailView.as_view(), name='product-image-detail'),
+    
+    # Category Management - только для админов
+    path('categories/', views.CategoryListCreateView.as_view(), name='category-list'),
+    path('categories/<int:pk>/', views.CategoryDetailView.as_view(), name='category-detail'),
+    
+    # Order Management - только для админов
+    path('orders/', views.OrderListCreateView.as_view(), name='order-list'),
+    path('orders/<int:pk>/', views.OrderDetailView.as_view(), name='order-detail'),
+    path('orders/<int:order_id>/update-status/', views.update_order_status, name='update-order-status'),
+    
+    # Withdrawal Management - только для админов
+    path('withdrawals/', views.WithdrawalRequestListCreateView.as_view(), name='withdrawal-list'),
+    path('withdrawals/<int:pk>/', views.WithdrawalRequestDetailView.as_view(), name='withdrawal-detail'),
+    path('withdrawals/<int:withdrawal_id>/process/', views.process_withdrawal, name='process-withdrawal'),
+    
+    # User Profile Management
+    path('auth/user/', views.user_profile, name='user-profile'),
 ]

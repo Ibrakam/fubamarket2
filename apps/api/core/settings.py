@@ -48,7 +48,7 @@ AUTH_USER_MODEL = 'market.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'market.middleware.RefUtmCookieMiddleware',
+    'market.middleware.ReferralTrackingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
