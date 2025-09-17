@@ -90,9 +90,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     }
   }
 
-  // Convert price to UZS
-  const priceInUzs = convertUsdToUzs(product.price)
-  const referralCommissionInUzs = product.referral_commission ? convertUsdToUzs(product.referral_commission) : 0
+  // Price is already in UZS
+  const priceInUzs = product.price
+  const referralCommissionInUzs = product.referral_commission || 0
 
   return (
     <div className="group relative bg-white rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 hover:border-orange-200/50 hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-[1.01] sm:hover:scale-[1.02] backdrop-blur-sm">
