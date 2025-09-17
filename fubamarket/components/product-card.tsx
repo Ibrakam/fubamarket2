@@ -9,8 +9,9 @@ import { AnimatedButton } from "@/components/ui/animated-button"
 import { AnimatedCard } from "@/components/ui/animated-card"
 import { AnimatedIcon } from "@/components/ui/animated-icon"
 import { Heart, Star, ShoppingCart, TrendingUp, Users, Percent, Share2, Sparkles, Zap } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { getProductImage } from "@/lib/product-images"
 import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
 
@@ -23,13 +24,28 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { addItem } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
 
   const inWishlist = isInWishlist(product.id)
   // Используем изображение продукта, если оно есть, иначе дефолтное
   const productImage = getProductImage(product)
 
+  // Check authentication status
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const user = localStorage.getItem('user')
+    setIsAuthenticated(!!(token && user))
+  }, [])
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking add to cart
+    
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    
     setIsAddingToCart(true)
     addItem(product)
     // Simulate loading state
@@ -38,6 +54,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking wishlist
+    
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    
     if (inWishlist) {
       removeFromWishlist(product.id)
     } else {
@@ -94,9 +116,17 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const priceInUzs = convertUsdToUzs(product.price)
   const referralCommissionInUzs = product.referral_commission ? convertUsdToUzs(product.referral_commission) : 0
 
+  const handleProductClick = (e: React.MouseEvent) => {
+    if (!isAuthenticated) {
+      e.preventDefault()
+      router.push('/login')
+      return
+    }
+  }
+
   return (
     <div className="group relative bg-white rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 hover:border-orange-200/50 hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-[1.01] sm:hover:scale-[1.02] backdrop-blur-sm">
-      <Link href={`/product/${product.id}`} className="block">
+      <Link href={isAuthenticated ? `/product/${product.id}` : '/login'} className="block" onClick={handleProductClick}>
         {/* Product Image Container */}
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           <img
@@ -113,6 +143,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             <button
               onClick={(e) => {
                 e.preventDefault()
+                if (!isAuthenticated) {
+                  router.push('/login')
+                  return
+                }
                 onQuickView?.(product)
               }}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs sm:text-sm font-semibold py-2 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 backdrop-blur-sm"
@@ -237,67 +271,71 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
       </Link>
 
-      {/* Action Buttons - Outside of Link */}
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex flex-col gap-2 sm:gap-3">
-        {/* Wishlist Button */}
-        <button
-          onClick={handleWishlistToggle}
-          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm ${
-            inWishlist 
-              ? "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-red-200" 
-              : "bg-white/90 text-gray-600 hover:bg-white hover:text-red-500 hover:shadow-xl"
-          }`}
-        >
-          <Heart className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 ${inWishlist ? "fill-current scale-110" : ""}`} />
-        </button>
-      </div>
+      {/* Action Buttons - Outside of Link - Only show for authenticated users */}
+      {isAuthenticated && (
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex flex-col gap-2 sm:gap-3">
+          {/* Wishlist Button */}
+          <button
+            onClick={handleWishlistToggle}
+            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm ${
+              inWishlist 
+                ? "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-red-200" 
+                : "bg-white/90 text-gray-600 hover:bg-white hover:text-red-500 hover:shadow-xl"
+            }`}
+          >
+            <Heart className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-200 ${inWishlist ? "fill-current scale-110" : ""}`} />
+          </button>
+        </div>
+      )}
 
-      {/* Add to Cart Button - Fixed at bottom */}
-      <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
-        <button
-          onClick={handleAddToCart}
-          disabled={isAddingToCart || !product.inStock}
-          className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-white shadow-xl hover:shadow-2xl relative overflow-hidden group ${
-            isAddingToCart || !product.inStock
-              ? "bg-gradient-to-r from-gray-400 to-gray-500"
-              : "bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800"
-          }`}
-        >
-          {/* Shimmer effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      {/* Add to Cart Button - Fixed at bottom - Only show for authenticated users */}
+      {isAuthenticated && (
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
+          <button
+            onClick={handleAddToCart}
+            disabled={isAddingToCart || !product.inStock}
+            className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-white shadow-xl hover:shadow-2xl relative overflow-hidden group ${
+              isAddingToCart || !product.inStock
+                ? "bg-gradient-to-r from-gray-400 to-gray-500"
+                : "bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800"
+            }`}
+          >
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            
+            {isAddingToCart ? (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 sm:border-3 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm sm:text-lg">Qo'shilmoqda...</span>
+              </div>
+            ) : !product.inStock ? (
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
+                <span className="text-sm sm:text-lg">Omborda yo'q</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="text-sm sm:text-lg">Savatchaga qo'shish</span>
+              </div>
+            )}
+          </button>
           
-          {isAddingToCart ? (
+          {/* Referral Link Button */}
+          <button
+            onClick={handleCreateReferralLink}
+            className="w-full h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl font-semibold relative overflow-hidden group"
+          >
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 sm:border-3 border-white border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm sm:text-lg">Qo'shilmoqda...</span>
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Havolani nusxalash</span>
             </div>
-          ) : !product.inStock ? (
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
-              <span className="text-sm sm:text-lg">Omborda yo'q</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 sm:gap-3">
-              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-sm sm:text-lg">Savatchaga qo'shish</span>
-            </div>
-          )}
-        </button>
-        
-        {/* Referral Link Button */}
-        <button
-          onClick={handleCreateReferralLink}
-          className="w-full h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl font-semibold relative overflow-hidden group"
-        >
-          {/* Shimmer effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-          
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base">Havolani nusxalash</span>
-          </div>
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
