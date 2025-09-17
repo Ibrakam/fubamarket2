@@ -1,53 +1,25 @@
 "use client"
 
-import { Search, Menu, X } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Menu, X } from "lucide-react"
 import { CartDrawer } from "@/components/cart-drawer"
 import { WishlistDrawer } from "@/components/wishlist-drawer"
 import AuthDropdown from "@/components/auth-dropdown"
-import { useProductFilters } from "@/hooks/use-product-filters"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 
 export default function SiteHeader() {
-  const { setSearchQuery, searchQuery } = useProductFilters()
-  const router = useRouter()
-  const [searchValue, setSearchValue] = useState("")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-
-  // Синхронизация с глобальным состоянием поиска
-  useEffect(() => {
-    setSearchValue(searchQuery)
-  }, [searchQuery])
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmedQuery = searchValue.trim()
-    if (trimmedQuery) {
-      setSearchQuery(trimmedQuery)
-      router.push("/")
-      setIsSearchOpen(false)
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch(e)
-    }
-  }
 
   return (
     <>
       {/* Top banner - скрыт на мобильных */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm py-2 hidden md:block">
+      <div className="bg-orange-600 text-white text-sm py-2 hidden md:block">
         <div className="container mx-auto px-4 text-center">ISTALGAN JOYGA YETKAZAMIZ - BEPUL YETKAZIB BERISH !!</div>
       </div>
       
-      <header className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4">
+      <header className="border-b bg-white sticky top-0 auth-dropdown-backdrop" style={{ zIndex: 9998 }}>
+        <div className="container mx-auto px-4 overflow-hidden">
           {/* Main header row */}
           <div className="flex items-center justify-between py-3">
             {/* Logo */}
@@ -62,135 +34,89 @@ export default function SiteHeader() {
               <span className="hidden sm:block text-xl font-bold text-gray-800">FubaMarket</span>
             </Link>
 
-            {/* Desktop search - скрыт на мобильных */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
-              <form onSubmit={handleSearch} className="relative w-full">
-                <Input
-                  placeholder="Mahsulotlarni qidiring..."
-                  className="pr-10"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
-                {searchValue && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchValue("")
-                      setSearchQuery("")
-                    }}
-                    className="absolute right-8 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    ×
-                  </button>
-                )}
-              </form>
-            </div>
 
             {/* Right side actions */}
-            <div className="flex items-center space-x-2 md:space-x-4">
-              {/* Mobile search button */}
-              <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="md:hidden p-2 text-gray-600 hover:text-gray-800 transition-all duration-200 transform hover:scale-110 active:scale-95 rounded-full hover:bg-gray-100"
-              >
-                <Search className={`w-5 h-5 transition-transform duration-200 ${isSearchOpen ? 'rotate-90' : ''}`} />
-              </button>
+            <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
 
               {/* Wishlist and Cart */}
-              <div className="transform hover:scale-110 transition-transform duration-200">
-                <WishlistDrawer />
+              <div className="transform hover:scale-105 transition-transform duration-200">
+              <WishlistDrawer />
               </div>
-              <div className="transform hover:scale-110 transition-transform duration-200">
-                <CartDrawer />
+              <div className="transform hover:scale-105 transition-transform duration-200">
+              <CartDrawer />
               </div>
 
               {/* Mobile menu button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-gray-600 hover:text-gray-800 transition-all duration-200 transform hover:scale-110 active:scale-95 rounded-full hover:bg-gray-100"
+                className="md:hidden burger-menu-button relative p-3 text-black hover:text-gray-800 transition-all duration-200 transform hover:scale-105 active:scale-95 rounded-lg bg-transparent hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                style={{ color: '#000000', backgroundColor: 'transparent' }}
               >
-                <div className="transition-transform duration-200">
-                  {isMobileMenuOpen ? <X className="w-5 h-5 rotate-180" /> : <Menu className="w-5 h-5" />}
+                <div className="relative w-6 h-6">
+                  <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${isMobileMenuOpen ? 'opacity-0 rotate-180' : 'opacity-100'}`}>
+                    <Menu className="w-6 h-6" style={{ color: '#000000' }} />
+                  </div>
+                  <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 ${isMobileMenuOpen ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-180'}`}>
+                    <X className="w-6 h-6" style={{ color: '#000000' }} />
+                  </div>
                 </div>
               </button>
 
               {/* Desktop auth dropdown */}
-              <div className="hidden md:block transform hover:scale-105 transition-transform duration-200">
+              <div className="hidden md:block transform hover:scale-105 transition-transform duration-200 relative auth-dropdown" style={{ zIndex: 9999 }}>
                 <AuthDropdown />
               </div>
             </div>
           </div>
 
-          {/* Mobile search bar */}
-          {isSearchOpen && (
-            <div className="md:hidden pb-3 border-t border-gray-200 animate-slideDown">
-              <form onSubmit={handleSearch} className="relative mt-3">
-                <Input
-                  placeholder="Mahsulotlarni qidiring..."
-                  className="pr-10 transition-all duration-200 focus:scale-105"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110 active:scale-95"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
-                {searchValue && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchValue("")
-                      setSearchQuery("")
-                    }}
-                    className="absolute right-8 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110 active:scale-95"
-                  >
-                    ×
-                  </button>
-                )}
-              </form>
-            </div>
-          )}
 
           {/* Mobile menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 py-3 animate-slideDown">
-              <div className="flex flex-col space-y-3">
-                <div className="transform hover:scale-105 transition-transform duration-200">
-                  <AuthDropdown />
+            <>
+              {/* Mobile menu backdrop */}
+              <div 
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm md:hidden auth-dropdown-backdrop"
+                style={{ zIndex: 9998 }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
+              
+              <div className="md:hidden border-t border-gray-200 py-6 animate-slideDown relative bg-white auth-dropdown shadow-2xl" style={{ zIndex: 9999 }}>
+                <div className="flex flex-col space-y-2">
+                  {/* User section */}
+                  <div className="px-6 py-4 bg-gray-50 rounded-2xl mx-4 mb-4">
+                    <AuthDropdown />
+                  </div>
+                  
+                  {/* Navigation links */}
+                  <div className="px-4 space-y-1">
+                    <Link 
+                      href="/shop" 
+                      className="flex items-center text-gray-800 hover:text-black transition-all duration-200 py-3 px-6 rounded-lg hover:bg-gray-100 active:scale-95 group"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="w-2 h-2 bg-gray-400 rounded-full mr-4 group-hover:bg-gray-600 transition-colors duration-200"></div>
+                      <span className="font-medium text-base">Mahsulotlar</span>
+                    </Link>
+                    <Link 
+                      href="/about" 
+                      className="flex items-center text-gray-800 hover:text-black transition-all duration-200 py-3 px-6 rounded-lg hover:bg-gray-100 active:scale-95 group"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="w-2 h-2 bg-gray-400 rounded-full mr-4 group-hover:bg-gray-600 transition-colors duration-200"></div>
+                      <span className="font-medium text-base">Biz haqimizda</span>
+                    </Link>
+                    <Link 
+                      href="/contact" 
+                      className="flex items-center text-gray-800 hover:text-black transition-all duration-200 py-3 px-6 rounded-lg hover:bg-gray-100 active:scale-95 group"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="w-2 h-2 bg-gray-400 rounded-full mr-4 group-hover:bg-gray-600 transition-colors duration-200"></div>
+                      <span className="font-medium text-base">Aloqa</span>
+                    </Link>
+                  </div>
                 </div>
-                <Link 
-                  href="/shop" 
-                  className="text-gray-600 hover:text-gray-800 transition-all duration-200 py-2 transform hover:translate-x-2 hover:scale-105 active:scale-95 rounded-lg hover:bg-gray-50 px-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Mahsulotlar
-                </Link>
-                <Link 
-                  href="/about" 
-                  className="text-gray-600 hover:text-gray-800 transition-all duration-200 py-2 transform hover:translate-x-2 hover:scale-105 active:scale-95 rounded-lg hover:bg-gray-50 px-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Biz haqimizda
-                </Link>
-                <Link 
-                  href="/contact" 
-                  className="text-gray-600 hover:text-gray-800 transition-all duration-200 py-2 transform hover:translate-x-2 hover:scale-105 active:scale-95 rounded-lg hover:bg-gray-50 px-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Aloqa
-                </Link>
               </div>
-            </div>
+            </>
           )}
 
           {/* Desktop navigation */}

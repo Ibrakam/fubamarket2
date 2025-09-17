@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Plus, Edit, Eye, Package, DollarSign, TrendingUp } from "lucide-react"
+import { Search, Filter, Eye, Package, DollarSign, TrendingUp, Plus } from "lucide-react"
 import API_ENDPOINTS from "@/lib/api-config"
 
 interface Product {
@@ -88,9 +88,7 @@ export default function VendorProductsPage() {
     router.push(`/product/${productId}`)
   }
 
-  const handleEditProduct = (productId: number) => {
-    router.push(`/vendor/products/edit/${productId}`)
-  }
+  // Функция редактирования удалена - только админы могут редактировать продукты
 
   const getStatusColor = (isActive: boolean) => {
     return isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -126,13 +124,9 @@ export default function VendorProductsPage() {
           <h1 className="text-3xl font-bold">Mening mahsulotlarim</h1>
           <p className="text-gray-600">Mahsulot katalogingizni boshqaring</p>
         </div>
-        <Button 
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-          onClick={() => router.push('/vendor/products/add')}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Mahsulot qo&apos;shish
-        </Button>
+        <div className="text-center text-gray-500 text-sm">
+          Mahsulot qo'shish faqat administrator tomonidan amalga oshiriladi
+        </div>
       </div>
 
       {/* Stats */}
@@ -207,7 +201,7 @@ export default function VendorProductsPage() {
             </select>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
-              Ko&apos;proq filtrlash
+              Ko'proq filtrlash
             </Button>
           </div>
         </CardContent>
@@ -285,15 +279,7 @@ export default function VendorProductsPage() {
                     onClick={() => handleViewProduct(product.id)}
                   >
                     <Eye className="w-4 h-4 mr-2" />
-                    Ko&apos;rish
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleEditProduct(product.id)}
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Tahrirlash
+                    Ko'rish
                   </Button>
                 </div>
                 
@@ -320,7 +306,7 @@ export default function VendorProductsPage() {
               onClick={() => router.push('/vendor/products/add')}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Birinchi mahsulot qo&apos;shish
+              Birinchi mahsulot qo'shish
             </Button>
           </CardContent>
         </Card>

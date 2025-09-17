@@ -1,93 +1,76 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Package, ShoppingCart, DollarSign, ArrowRight } from "lucide-react"
+import { ArrowLeft, Package, Users, BarChart3, Settings, Shield, ShoppingCart, CreditCard } from "lucide-react"
 import Link from "next/link"
-import API_ENDPOINTS from "@/lib/api-config"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { API_ENDPOINTS } from "@/lib/api-config"
 
-interface DashboardStats {
-  total_users: number
-  total_vendors: number
-  total_products: number
-  total_orders: number
-  pending_withdrawals: number
-}
-
-export default function AdminDashboard() {
-  const { user, token, checkToken } = useAuth()
-  const router = useRouter()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
+export default function AdminPage() {
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    total_users: 0,
+    total_products: 0,
+    total_orders: 0,
+    total_withdrawals: 0,
+    user_stats: {
+      admins: 0,
+      vendors: 0,
+      ops: 0
+    },
+    order_stats: {
+      pending: 0,
+      completed: 0,
+      cancelled: 0
+    },
+    withdrawal_stats: {
+      pending: 0,
+      approved: 0,
+      rejected: 0
+    }
+  })
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    if (!user) {
-      router.push("/login")
-      return
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      
+      if (user.role !== 'superadmin') {
+        router.push('/')
+        return
+      }
+      
+      loadDashboardData()
     }
+  }, [user, authLoading, router])
 
-    if (user.role !== "superadmin" && user.role !== "ops") {
-      router.push("/")
-      return
-    }
-
-    fetchStats()
-  }, [user, router])
-
-  const fetchStats = async () => {
+  const loadDashboardData = async () => {
     try {
-      console.log('Checking token validity...')
-      const isTokenValid = await checkToken()
-      
-      if (!isTokenValid) {
-        console.log('Token is invalid, redirecting to login...')
-        router.push('/login?redirect=admin')
-        return
-      }
-      
-      const authToken = token || localStorage.getItem('access_token')
-      console.log('Auth token:', authToken ? 'Found' : 'Not found')
-      console.log('User role:', user?.role)
-      
-      if (!authToken) {
-        console.error('No auth token found')
-        setLoading(false)
-        return
-      }
-      
-      console.log('Fetching dashboard stats...')
+      const token = localStorage.getItem('token')
+      if (!token) return
+
       const response = await fetch(API_ENDPOINTS.ADMIN_DASHBOARD, {
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
 
-      console.log('Response status:', response.status)
-      
       if (response.ok) {
         const data = await response.json()
-        console.log('Dashboard stats received:', data)
         setStats(data)
       } else {
-        const errorText = await response.text()
-        console.error('API Error:', response.status, errorText)
-        
-        // Если 401, попробуем обновить токен
-        if (response.status === 401) {
-          console.log('Token expired, redirecting to login...')
-          router.push('/login?redirect=admin')
-        }
+        console.error('Failed to load dashboard data:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error("Error fetching stats:", error)
-      // Проверяем, доступен ли сервер
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.error('Server is not reachable. Make sure Django server is running.')
-      }
+      console.error('Error loading dashboard data:', error)
     } finally {
       setLoading(false)
     }
@@ -95,145 +78,268 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h1 className="text-2xl font-bold mb-4">Boshqaruv paneli yuklanmoqda...</h1>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка...</p>
         </div>
       </div>
     )
   }
 
-  if (!user || (user.role !== "superadmin" && user.role !== "ops")) {
-    return null
+  if (!user || user.role !== 'superadmin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Доступ запрещен</h2>
+            <p className="text-gray-600 mb-6">
+              Только администраторы могут получить доступ к этой странице
+            </p>
+            <Link href="/">
+              <Button>Вернуться на главную</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
+
+  const adminFeatures = [
+    {
+      title: "Управление продуктами",
+      description: "Создание, редактирование и удаление продуктов",
+      icon: Package,
+      href: "/admin/products",
+      color: "bg-blue-500"
+    },
+    {
+      title: "Реферальная программа",
+      description: "Управление реферальными ссылками и вознаграждениями",
+      icon: BarChart3,
+      href: "/admin/referral",
+      color: "bg-green-500"
+    },
+    {
+      title: "Управление заказами",
+      description: "Просмотр и обработка заказов",
+      icon: ShoppingCart,
+      href: "/admin/orders",
+      color: "bg-orange-500"
+    },
+    {
+      title: "Запросы на вывод",
+      description: "Обработка запросов на вывод средств",
+      icon: CreditCard,
+      href: "/admin/withdrawals",
+      color: "bg-purple-500"
+    },
+    {
+      title: "Управление пользователями",
+      description: "Просмотр и управление пользователями",
+      icon: Users,
+      href: "/admin/users",
+      color: "bg-indigo-500"
+    },
+    {
+      title: "Настройки системы",
+      description: "Конфигурация и настройки платформы",
+      icon: Settings,
+      href: "/admin/settings",
+      color: "bg-gray-500"
+    }
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin boshqaruv paneli</h1>
-          <p className="text-gray-600 mt-2">
-            Xush kelibsiz, {user.first_name} {user.last_name} ({user.role})
-          </p>
-        </div>
-
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Jami foydalanuvchilar</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_users}</div>
-                <p className="text-xs text-muted-foreground">
-                  Barcha ro'yxatdan o'tgan foydalanuvchilar
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Sotuvchilar</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_vendors}</div>
-                <p className="text-xs text-muted-foreground">
-                  Faol sotuvchilar
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Mahsulotlar</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_products}</div>
-                <p className="text-xs text-muted-foreground">
-                  Jami mahsulotlar
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Buyurtmalar</CardTitle>
-                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_orders}</div>
-                <p className="text-xs text-muted-foreground">
-                  Jami buyurtmalar
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {user.role === "superadmin" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Foydalanuvchilarni boshqarish</CardTitle>
-                <CardDescription>
-                  Foydalanuvchilar, rollar va ruxsatlarni boshqarish
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/admin/users">
-                  <Button className="w-full">
-                    Foydalanuvchilarni ko'rish
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Buyurtmalarni boshqarish</CardTitle>
-              <CardDescription>
-                Barcha buyurtmalarni ko'rish va boshqarish
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/admin/orders">
-                <Button className="w-full">
-                  Buyurtmalarni ko'rish
-                  <ArrowRight className="ml-2 h-4 w-4" />
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Назад
                 </Button>
               </Link>
-            </CardContent>
-          </Card>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Административная панель</h1>
+                <p className="text-gray-600 mt-1">
+                  Управление платформой FubaMarket
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-orange-600" />
+              <span className="text-sm font-medium text-gray-700">Администратор</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        {/* Welcome Card */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                <Shield className="w-8 h-8 text-orange-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Добро пожаловать, {user.username}!
+                </h2>
+                <p className="text-gray-600">
+                  Управляйте всеми аспектами платформы FubaMarket
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Admin Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {adminFeatures.map((feature, index) => {
+            const IconComponent = feature.icon
+            return (
+              <Link key={index} href={feature.href}>
+                <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 ${feature.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Pul yechish so'rovlari</CardTitle>
-              <CardDescription>
-                Sotuvchilarning pul yechish so'rovlarini qayta ishlash
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Kutilmoqda:</span>
-                  <span className="font-semibold">{stats?.pending_withdrawals || 0}</span>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Всего продуктов</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total_products}</p>
                 </div>
-                <Link href="/admin/withdrawals">
-                  <Button className="w-full">
-                    So'rovlarni ko'rish
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                <Package className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
 
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Всего заказов</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total_orders}</p>
+                </div>
+                <ShoppingCart className="w-8 h-8 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Пользователи</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total_users}</p>
+                </div>
+                <Users className="w-8 h-8 text-indigo-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Запросы на вывод</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total_withdrawals}</p>
+                </div>
+                <CreditCard className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Detailed Stats */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Статистика пользователей</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Администраторы</span>
+                  <span className="font-medium">{stats.user_stats.admins}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Продавцы</span>
+                  <span className="font-medium">{stats.user_stats.vendors}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Операторы</span>
+                  <span className="font-medium">{stats.user_stats.ops}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Статистика заказов</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Ожидают</span>
+                  <span className="font-medium">{stats.order_stats.pending}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Завершены</span>
+                  <span className="font-medium">{stats.order_stats.completed}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Отменены</span>
+                  <span className="font-medium">{stats.order_stats.cancelled}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Статистика выводов</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Ожидают</span>
+                  <span className="font-medium">{stats.withdrawal_stats.pending}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Одобрены</span>
+                  <span className="font-medium">{stats.withdrawal_stats.approved}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Отклонены</span>
+                  <span className="font-medium">{stats.withdrawal_stats.rejected}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

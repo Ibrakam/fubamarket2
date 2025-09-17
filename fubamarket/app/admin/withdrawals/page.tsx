@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Download, Eye, Check, X, DollarSign, Clock, AlertCircle } from "lucide-react"
-import { WithdrawalProcessModal } from "@/components/withdrawal-process-modal"
+import { Search, Filter, Download, Check, X, DollarSign, Clock, AlertCircle, ArrowLeft } from "lucide-react"
 import API_ENDPOINTS from "@/lib/api-config"
 
 interface WithdrawalRequest {
@@ -29,23 +28,14 @@ interface WithdrawalRequest {
 }
 
 export default function AdminWithdrawalsPage() {
-  const { user, token } = useAuth()
+  const { user, token, loading: authLoading } = useAuth()
   const router = useRouter()
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
-  useEffect(() => {
-    if (!user || (user.role !== 'superadmin' && user.role !== 'ops')) {
-      router.push('/login')
-      return
-    }
-
-    fetchWithdrawals()
-  }, [user, router])
-
-  const fetchWithdrawals = async () => {
+  const fetchWithdrawals = useCallback(async () => {
     try {
       const response = await fetch(API_ENDPOINTS.ADMIN_WITHDRAWALS, {
         headers: {
@@ -55,19 +45,35 @@ export default function AdminWithdrawalsPage() {
       
       if (response.ok) {
         const data = await response.json()
-        setWithdrawals(data.withdrawals || [])
+        setWithdrawals(data || [])
       }
     } catch (error) {
       console.error('Error fetching withdrawals:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      
+      if (user.role !== 'superadmin' && user.role !== 'ops') {
+        router.push('/')
+        return
+      }
+      
+      fetchWithdrawals()
+    }
+  }, [user, authLoading, router, fetchWithdrawals])
 
   const processWithdrawal = async (withdrawalId: number, status: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/withdrawals/${withdrawalId}/process`, {
-        method: 'POST',
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_WITHDRAWAL_BY_ID(withdrawalId.toString())}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -127,9 +133,15 @@ export default function AdminWithdrawalsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Withdrawal Management</h1>
-          <p className="text-gray-600">Process vendor withdrawal requests</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/admin')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Назад
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Withdrawal Management</h1>
+            <p className="text-gray-600">Process vendor withdrawal requests</p>
+          </div>
         </div>
         <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
           <Download className="w-4 h-4 mr-2" />

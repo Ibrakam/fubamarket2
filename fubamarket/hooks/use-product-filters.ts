@@ -9,6 +9,11 @@ export function useProductFilters() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  
+  const handleSetSearchQuery = (query: string) => {
+    console.log("Setting search query in hook:", query)
+    setSearchQuery(query)
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -29,7 +34,7 @@ export function useProductFilters() {
           
           // Если нет реальных фотографий, используем дефолтную функцию
           if (!productImage) {
-            productImage = getProductImage(String(p.title || p.name || "Untitled Product"), String(p.id || ""))
+            productImage = getProductImage(p)
           }
           
           return {
@@ -45,6 +50,7 @@ export function useProductFilters() {
           }
         })
         setProducts(mapped)
+        console.log("Products loaded:", mapped.length)
       } catch (e) {
         console.error("Error loading products:", e)
         setProducts([])
@@ -56,21 +62,27 @@ export function useProductFilters() {
   }, [])
 
   const filteredProducts = useMemo(() => {
+    console.log("Filtering products with searchQuery:", searchQuery)
+    console.log("Total products:", products.length)
+    
     if (!searchQuery.trim()) {
+      console.log("No search query, returning all products")
       return products
     }
     
     const query = searchQuery.toLowerCase().trim()
-    return products.filter(product => 
+    const filtered = products.filter(product => 
       product.name.toLowerCase().includes(query) ||
       (product.description && product.description.toLowerCase().includes(query))
     )
+    console.log("Filtered products count:", filtered.length)
+    return filtered
   }, [products, searchQuery])
 
   return {
     filteredProducts,
     loading,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSetSearchQuery,
   }
 }

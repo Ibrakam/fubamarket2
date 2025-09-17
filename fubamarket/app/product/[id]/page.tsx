@@ -2,20 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Heart, Share2, Star, ShoppingCart, Truck, Shield, RotateCcw } from "lucide-react"
+import { ArrowLeft, Star, Truck, Shield, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ProductGallery } from "@/components/product-gallery"
 import { ProductReviews } from "@/components/product-reviews"
 import { ProductCard } from "@/components/product-card"
+import { ReferralTracker } from "@/components/referral-tracker"
+import ProductButtons from "./ProductButtons"
 import { useCart } from "@/contexts/cart-context"
 import { useWishlist } from "@/contexts/wishlist-context"
 import { getAverageRating } from "@/data/reviews"
 import Link from "next/link"
 import type { Product } from "@/contexts/cart-context"
 import { getProductImage } from "@/lib/product-images"
+import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
 import API_ENDPOINTS from "@/lib/api-config"
+import styles from "./ProductButtons.module.css"
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -35,7 +39,10 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true)
+        console.log("Fetching product with ID:", params.id)
+        console.log("API endpoint:", API_ENDPOINTS.PRODUCT_BY_ID(params.id as string))
         const response = await fetch(API_ENDPOINTS.PRODUCT_BY_ID(params.id as string))
+        console.log("Response status:", response.status)
         if (!response.ok) {
           throw new Error("Product not found")
         }
@@ -46,14 +53,19 @@ export default function ProductDetailPage() {
         if (data.photos && Array.isArray(data.photos) && data.photos.length > 0) {
           // If there are photos, use the first one
           const firstPhoto = data.photos[0]
-          if (firstPhoto.url) {
-            productImage = firstPhoto.url
+          if (firstPhoto.image) {
+            // If it's a full URL, use as is, otherwise add API base URL
+            if (firstPhoto.image.startsWith('http')) {
+              productImage = firstPhoto.image
+            } else {
+              productImage = `http://localhost:8000${firstPhoto.image}`
+            }
           }
         }
         
         // If no real photos, use default function
         if (!productImage) {
-          productImage = getProductImage(data.title || data.name || "Untitled Product", String(data.id))
+          productImage = getProductImage(data)
         }
         
         const productData: Product = {
@@ -85,22 +97,27 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
+        console.log("Fetching related products...")
         const response = await fetch(API_ENDPOINTS.PRODUCTS)
+        console.log("Related products response status:", response.status)
         if (response.ok) {
           const data = await response.json()
-          const mappedProducts: Product[] = (data || []).map((p: any) => ({
-            id: String(p.id),
-            name: String(p.title || p.name || "Untitled Product"),
-            price: (Number(p.price_uzs) || 0) / 100,
-            image: getProductImage(p.title || p.name || "Untitled Product", String(p.id)),
-            category: "",
-            rating: 5,
-            description: String(p.description || ""),
-            inStock: p.is_active !== false,
-          }))
+          const mappedProducts: Product[] = (data || []).map((p: unknown) => {
+            const product = p as { id: number; title?: string; name?: string; price_uzs?: number; description?: string; is_active?: boolean; photos?: Array<{ id: number; image: string }> }
+            return {
+              id: String(product.id),
+              name: String(product.title || product.name || "Untitled Product"),
+              price: (Number(product.price_uzs) || 0) / 100,
+              image: getProductImage(product),
+              category: "",
+              rating: 5,
+              description: String(product.description || ""),
+              inStock: product.is_active !== false,
+            }
+          })
           
           // Filter out current product and limit to 4
-          const filtered = mappedProducts.filter(p => p.id !== params.id).slice(0, 4)
+          const filtered = mappedProducts.filter(p => p.id !== String(params.id)).slice(0, 4)
           setRelatedProducts(filtered)
         }
       } catch (err) {
@@ -139,16 +156,20 @@ export default function ProductDetailPage() {
   }
 
   // Get all product images for gallery
-  const productImages = product.photos && product.photos.length > 0 
-    ? product.photos.map(photo => photo.url)
-    : [product.image] // Fallback to single image if no photos
+  const productImages: string[] = product ? (
+    product.photos && product.photos.length > 0 
+      ? product.photos.map(photo => photo.image).filter((url): url is string => Boolean(url))
+      : [product.image].filter((url): url is string => Boolean(url)) // Fallback to single image if no photos
+  ) : []
 
-  const averageRating = getAverageRating(product.id)
-  const inWishlist = isInWishlist(product.id)
+
+  const averageRating = product ? getAverageRating(product.id) : 0
+  const inWishlist = product ? isInWishlist(product.id) : false
 
 
 
   const handleAddToCart = async () => {
+    if (!product) return
     setIsAddingToCart(true)
     for (let i = 0; i < quantity; i++) {
       addToCart(product)
@@ -157,6 +178,7 @@ export default function ProductDetailPage() {
   }
 
   const handleWishlistToggle = () => {
+    if (!product) return
     if (inWishlist) {
       removeFromWishlist(product.id)
     } else {
@@ -164,10 +186,14 @@ export default function ProductDetailPage() {
     }
   }
 
+
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white product-page">
+      {/* Referral Tracker */}
+      <ReferralTracker productId={String(params.id)} />
+      
       {/* Breadcrumb */}
       <div className="bg-gray-50 py-4">
         <div className="container mx-auto px-4">
@@ -187,10 +213,10 @@ export default function ProductDetailPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+        <button onClick={() => router.back()} className={`${styles.backButton} mb-6`}>
+          <ArrowLeft className={styles.backButtonIcon} />
+          Ortga
+        </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
           {/* Product Gallery */}
@@ -219,11 +245,11 @@ export default function ProductDetailPage() {
                 <span className="text-sm text-gray-600">
                   {averageRating > 0
                     ? `${averageRating} (${Math.floor(Math.random() * 50) + 10} ta sharh)`
-                    : "Hali sharhlar yo&apos;q"}
+                    : "Hali sharhlar yo'q"}
                 </span>
               </div>
 
-              <div className="text-3xl font-bold text-blue-600 mb-4">${product.price.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-blue-600 mb-4">{formatUzsWithSpaces(convertUsdToUzs(product.price))}</div>
 
               <p className="text-gray-700 mb-6">{product.description}</p>
             </div>
@@ -237,10 +263,8 @@ export default function ProductDetailPage() {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`w-12 h-12 border rounded-lg flex items-center justify-center text-sm font-medium ${
-                        selectedSize === size
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-300 hover:border-gray-400"
+                      className={`size-button ${
+                        selectedSize === size ? "selected" : ""
                       }`}
                     >
                       {size}
@@ -256,14 +280,14 @@ export default function ProductDetailPage() {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
+                  className="quantity-button"
                 >
                   -
                 </button>
-                <span className="w-12 text-center font-medium">{quantity}</span>
+                <span className="w-12 text-center font-medium text-lg">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
+                  className="quantity-button"
                 >
                   +
                 </button>
@@ -271,31 +295,13 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-3">
-              <Button
-                onClick={handleAddToCart}
-                disabled={!product.inStock || isAddingToCart}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
-                size="lg"
-              >
-                {isAddingToCart ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                ) : (
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                )}
-                {product.inStock ? "Savatga qo'shish" : "Omborda yo'q"}
-              </Button>
-
-              <div className="flex space-x-2">
-                <Button variant="outline" onClick={handleWishlistToggle} className="flex-1 bg-transparent">
-                  <Heart className={`w-4 h-4 mr-2 ${inWishlist ? "fill-red-500 text-red-500" : ""}`} />
-                  {inWishlist ? "Istaklar ro'yxatidan olib tashlash" : "Istaklar ro'yxatiga qo'shish"}
-                </Button>
-                <Button variant="outline" size="lg">
-                  <Share2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+            <ProductButtons
+              onAddToCart={handleAddToCart}
+              onWishlistToggle={handleWishlistToggle}
+              isAddingToCart={isAddingToCart}
+              inWishlist={inWishlist}
+              inStock={product.inStock}
+            />
 
             {/* Product Features */}
             <div className="border-t pt-6">
@@ -304,7 +310,7 @@ export default function ProductDetailPage() {
                   <Truck className="w-5 h-5 text-green-600" />
                   <div>
                     <div className="font-medium">Bepul yetkazib berish</div>
-                    <div className="text-sm text-gray-600">50$ dan ortiq buyurtmalar uchun</div>
+                    <div className="text-sm text-gray-600">630 000 so'm dan ortiq buyurtmalar uchun</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -317,8 +323,8 @@ export default function ProductDetailPage() {
                 <div className="flex items-center space-x-3">
                   <Shield className="w-5 h-5 text-purple-600" />
                   <div>
-                    <div className="font-medium">Xavfsiz to&apos;lov</div>
-                    <div className="text-sm text-gray-600">Sizning to&apos;lovingiz himoyalangan</div>
+                    <div className="font-medium">Xavfsiz to'lov</div>
+                    <div className="text-sm text-gray-600">Sizning to'lovingiz himoyalangan</div>
                   </div>
                 </div>
               </div>

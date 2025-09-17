@@ -147,16 +147,13 @@ export default function VendorDashboard() {
               <Link href="/vendor/products">
                 <Button className="w-full">
                   <Package className="mr-2 h-4 w-4" />
-                  Mahsulotlarni ko&apos;rish
+                  Mahsulotlarni ko'rish
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/vendor/products/create">
-                <Button variant="outline" className="w-full">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Yangi mahsulot qo&apos;shish
-                </Button>
-              </Link>
+              <div className="text-center text-gray-500 text-sm">
+                Mahsulot qo'shish faqat administrator tomonidan amalga oshiriladi
+              </div>
             </CardContent>
           </Card>
 
@@ -164,14 +161,14 @@ export default function VendorDashboard() {
             <CardHeader>
               <CardTitle>Buyurtma boshqaruvi</CardTitle>
               <CardDescription>
-                Buyurtmalaringizni ko&apos;ring va boshqaring
+                Buyurtmalaringizni ko'ring va boshqaring
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/vendor/orders">
                 <Button className="w-full">
                   <ShoppingCart className="mr-2 h-4 w-4" />
-                  Buyurtmalarni ko&apos;rish
+                  Buyurtmalarni ko'rish
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -182,21 +179,21 @@ export default function VendorDashboard() {
             <CardHeader>
               <CardTitle>Pul yechish</CardTitle>
               <CardDescription>
-                Pul yechish so&apos;rovlari va tarixni ko&apos;ring
+                Pul yechish so'rovlari va tarixni ko'ring
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <Link href="/vendor/withdrawals">
                 <Button className="w-full">
                   <DollarSign className="mr-2 h-4 w-4" />
-                  Pul yechishni ko&apos;rish
+                  Pul yechishni ko'rish
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/vendor/withdrawals/request">
                 <Button variant="outline" className="w-full">
                   <Plus className="mr-2 h-4 w-4" />
-                  Pul yechish so&apos;rovi
+                  Pul yechish so'rovi
                 </Button>
               </Link>
             </CardContent>
@@ -205,7 +202,7 @@ export default function VendorDashboard() {
 
         {stats && stats.products.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">So&apos;nggi mahsulotlar</h2>
+            <h2 className="text-2xl font-bold mb-4">So'nggi mahsulotlar</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {stats.products.slice(0, 6).map((product: any) => (
                 <Card key={product.id}>

@@ -12,7 +12,7 @@ function fixJSXOnlyApostrophes(filePath) {
       if (text.includes('"') || text.includes('`') || text.includes('${')) {
         return match; // Skip if it contains string delimiters
       }
-      const fixedText = text.replace(/([^&])'([^;])/g, '$1&apos;$2');
+      const fixedText = text.replace(/([^&])'([^;])/g, '$1'$2');
       return '>' + fixedText + '<';
     });
     

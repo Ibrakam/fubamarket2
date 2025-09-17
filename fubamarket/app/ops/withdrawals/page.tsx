@@ -125,7 +125,7 @@ export default function OpsWithdrawalsPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <p>Pul yechish so&apos;rovlari yuklanmoqda...</p>
+          <p>Pul yechish so'rovlari yuklanmoqda...</p>
         </div>
       </div>
     )
@@ -135,8 +135,8 @@ export default function OpsWithdrawalsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Pul yechish so&apos;rovlarini boshqarish</h1>
-          <p className="text-gray-600">Sotuvchilarning pul yechish so&apos;rovlarini qayta ishlash</p>
+          <h1 className="text-3xl font-bold">Pul yechish so'rovlarini boshqarish</h1>
+          <p className="text-gray-600">Sotuvchilarning pul yechish so'rovlarini qayta ishlash</p>
         </div>
         <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
           <Download className="w-4 h-4 mr-2" />
@@ -151,7 +151,7 @@ export default function OpsWithdrawalsPage() {
             <div className="flex items-center space-x-2">
               <Clock className="w-5 h-5 text-yellow-500" />
               <div>
-                <p className="text-sm text-gray-500">Kutilayotgan so&apos;rovlar</p>
+                <p className="text-sm text-gray-500">Kutilayotgan so'rovlar</p>
                 <p className="text-2xl font-bold">{totalPending}</p>
               </div>
             </div>
@@ -173,7 +173,7 @@ export default function OpsWithdrawalsPage() {
             <div className="flex items-center space-x-2">
               <AlertCircle className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-500">Jami so&apos;rovlar</p>
+                <p className="text-sm text-gray-500">Jami so'rovlar</p>
                 <p className="text-2xl font-bold">{withdrawals.length}</p>
               </div>
             </div>
@@ -188,7 +188,7 @@ export default function OpsWithdrawalsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Pul yechish so&apos;rovlarini qidirish..."
+                placeholder="Pul yechish so'rovlarini qidirish..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -206,7 +206,7 @@ export default function OpsWithdrawalsPage() {
             </select>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
-              Qo&apos;shimcha filtrlash
+              Qo'shimcha filtrlash
             </Button>
           </div>
         </CardContent>

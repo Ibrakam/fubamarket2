@@ -221,7 +221,7 @@ export default function VendorOrdersPage() {
             </select>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
-              Ko&apos;proq filtrlash
+              Ko'proq filtrlash
             </Button>
           </div>
         </CardContent>

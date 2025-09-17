@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Download, Eye, Edit } from "lucide-react"
+import { Search, Filter, Download, Eye, Edit, ArrowLeft } from "lucide-react"
 import { OrderStatusModal } from "@/components/order-status-modal"
 import { OrderDetailsModal } from "@/components/order-details-modal"
 import API_ENDPOINTS from "@/lib/api-config"
@@ -37,7 +37,7 @@ interface OrderItem {
 }
 
 export default function AdminOrdersPage() {
-  const { user, token } = useAuth()
+  const { user, token, loading: authLoading } = useAuth()
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,13 +48,20 @@ export default function AdminOrdersPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   useEffect(() => {
-    if (!user || user.role !== 'superadmin') {
-      router.push('/login')
-      return
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      
+      if (user.role !== 'superadmin') {
+        router.push('/')
+        return
+      }
+      
+      fetchOrders()
     }
-
-    fetchOrders()
-  }, [user, router])
+  }, [user, authLoading, router])
 
   const fetchOrders = async () => {
     try {
@@ -66,7 +73,7 @@ export default function AdminOrdersPage() {
       
       if (response.ok) {
         const data = await response.json()
-        setOrders(data.orders || [])
+        setOrders(data || [])
       }
     } catch (error) {
       console.error('Error fetching orders:', error)
@@ -77,7 +84,7 @@ export default function AdminOrdersPage() {
 
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_ENDPOINTS.ADMIN_ORDER_BY_ID(orderId.toString())}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -144,9 +151,15 @@ export default function AdminOrdersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Buyurtmalarni boshqarish</h1>
-          <p className="text-gray-600">Barcha buyurtmalarni boshqarish va kuzatish</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/admin')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Назад
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Buyurtmalarni boshqarish</h1>
+            <p className="text-gray-600">Barcha buyurtmalarni boshqarish va kuzatish</p>
+          </div>
         </div>
         <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
           <Download className="w-4 h-4 mr-2" />

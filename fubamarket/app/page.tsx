@@ -1,46 +1,20 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ProductCard } from "@/components/product-card"
 import { useProductFilters } from "@/hooks/use-product-filters"
 import { FeaturedProducts } from "@/components/featured-products"
 import { LatestReviews } from "@/components/latest-reviews"
+import { ReferralDebug } from "@/components/referral-debug"
 import { Search, Truck, Shield, RotateCcw } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 export default function HomePage() {
-  const { filteredProducts: apiProducts, loading, searchQuery, setSearchQuery } = useProductFilters()
-  const [localSearchQuery, setLocalSearchQuery] = useState("")
+  const { filteredProducts: apiProducts, loading, searchQuery } = useProductFilters()
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const trimmedQuery = localSearchQuery.trim()
-    if (trimmedQuery) {
-      setSearchQuery(trimmedQuery)
-      // Прокручиваем к результатам поиска
-      setTimeout(() => {
-        const resultsSection = document.getElementById('search-results')
-        if (resultsSection) {
-          resultsSection.scrollIntoView({ behavior: 'smooth' })
-        }
-      }, 100)
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch(e)
-    }
-  }
-
-  // Синхронизация локального состояния с глобальным
-  useEffect(() => {
-    setLocalSearchQuery(searchQuery)
-  }, [searchQuery])
-
-  // Прокрутка к началу страницы при очистке поиска
+  // Qidiruvni tozalashda sahifaning boshiga o'tish
   useEffect(() => {
     if (!searchQuery.trim()) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -51,53 +25,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section with Search */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12 md:py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-            fuba market ga xush kelibsiz
-          </h1>
-          <p className="text-sm sm:text-base md:text-xl mb-6 md:mb-8 max-w-2xl mx-auto px-2">
-            Dunyo bo&apos;ylab ishonchli sotuvchilardan ajoyib mahsulotlarni kashf qiling
-          </p>
-          <div className="max-w-sm sm:max-w-md mx-auto px-2">
-            <form onSubmit={handleSearch} className="flex">
-              <Input
-                placeholder="Mahsulotlarni qidiring..."
-                className="rounded-r-none border-0 text-gray-900 text-sm sm:text-base"
-                value={localSearchQuery}
-                onChange={(e) => setLocalSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-              <Button 
-                type="submit"
-                className="rounded-l-none bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0 h-10 px-3 sm:px-4 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-              >
-                <Search className="w-4 h-4 sm:mr-2 transition-transform duration-200 group-hover:rotate-12" />
-                <span className="hidden sm:inline">Qidirish</span>
-              </Button>
-            </form>
-            {searchQuery.trim() && (
-              <div className="mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearchQuery("")
-                    setLocalSearchQuery("")
-                  }}
-                  className="text-white border-white hover:bg-white hover:text-gray-900 transition-colors text-xs sm:text-sm"
-                >
-                  <Search className="w-3 h-3 mr-1" />
-                  Qidiruvni tozalash
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* Static Promo Banners Section */}
+      {/* Statik reklama bannerlari bo'limi */}
       <section className="py-6 md:py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -114,7 +43,7 @@ export default function HomePage() {
                   <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">Yangi mahsulotlar</h3>
                   <p className="text-xs md:text-sm mb-3 md:mb-4">Eng so'nggi va eng yaxshi mahsulotlar</p>
                   <Link href="/shop">
-                    <Button className="bg-white text-blue-600 hover:bg-gray-100 text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl">
+                    <Button variant="secondary" size="sm" className="text-xs md:text-sm">
                       Ko'rish
                   </Button>
                   </Link>
@@ -135,7 +64,7 @@ export default function HomePage() {
                   <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">Chegirmalar</h3>
                   <p className="text-xs md:text-sm mb-3 md:mb-4">50% gacha chegirmalar</p>
                   <Link href="/shop">
-                    <Button className="bg-white text-green-600 hover:bg-gray-100 text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl">
+                    <Button size="sm" className="text-xs md:text-sm">
                       Sotib olish
                   </Button>
                   </Link>
@@ -156,7 +85,7 @@ export default function HomePage() {
                   <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">Tezkor yetkazib berish</h3>
                   <p className="text-xs md:text-sm mb-3 md:mb-4">1 kunda yetkazib berish</p>
                   <Link href="/shop">
-                    <Button className="bg-white text-purple-600 hover:bg-gray-100 text-xs md:text-sm px-3 md:px-4 py-1 md:py-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl">
+                    <Button variant="secondary" size="sm" className="text-xs md:text-sm">
                       Buyurtma berish
                 </Button>
                   </Link>
@@ -168,13 +97,13 @@ export default function HomePage() {
       </section>
 
 
-      {/* Featured Products Section */}
+      {/* Tavsiya etilgan mahsulotlar bo'limi */}
       <section className="py-8 md:py-16">
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
             <h2 className="text-2xl md:text-3xl font-bold">Tavsiya etilgan mahsulotlar</h2>
             <Link href="/shop">
-              <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-500 w-full sm:w-auto transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg">
+              <Button variant="outline" className="w-full sm:w-auto">
                 Barcha mahsulotlar
               </Button>
             </Link>
@@ -183,7 +112,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Xususiyatlar bo'limi */}
       <section className="py-8 md:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8 md:mb-12">
@@ -218,7 +147,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Latest Reviews Section */}
+      {/* So'nggi sharhlar bo'limi */}
       <section className="py-8 md:py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8 md:mb-12">
@@ -231,7 +160,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Search Results Section */}
+      {/* Qidiruv natijalari bo'limi */}
       {searchQuery.trim() && (
         <section id="search-results" className="py-16">
         <div className="container mx-auto px-4">
@@ -248,7 +177,7 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Search Form in Results Section */}
+            {/* Natijalar bo'limidagi qidiruv formasi */}
             <div className="max-w-md mb-8">
               <form onSubmit={handleSearch} className="flex">
                 <Input
@@ -314,8 +243,8 @@ export default function HomePage() {
           {apiProducts.length > 8 && (
             <div className="text-center mt-8">
               <Link href="/shop">
-                  <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-                    Barcha {apiProducts.length} mahsulotni ko&apos;rish
+                  <Button>
+                    Barcha {apiProducts.length} mahsulotni ko'rish
                 </Button>
               </Link>
             </div>
@@ -324,14 +253,15 @@ export default function HomePage() {
       </section>
       )}
 
-      {/* Simple Footer */}
+
+      {/* Oddiy footer */}
       <footer className="bg-gray-900 text-white py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <div>
               <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">BIZ HAQIMIZDA</h3>
               <p className="text-xs md:text-sm text-gray-400 mb-4 leading-relaxed">
-                Biz dunyo bo&apos;ylab ishonchli sotuvchilardan eng yaxshi mahsulotlarni sizga yetkazishga ishtiyoq bilan qaratilganmiz.
+                Biz dunyo bo'ylab ishonchli sotuvchilardan eng yaxshi mahsulotlarni sizga yetkazishga ishtiyoq bilan qaratilganmiz.
               </p>
             </div>
             <div>
@@ -344,7 +274,7 @@ export default function HomePage() {
                   Mening hisobim
                 </Link>
                 <Link href="/contact" className="block text-xs md:text-sm text-gray-400 hover:text-white transition-colors">
-                  Biz bilan bog&apos;lanish
+                  Biz bilan bog'lanish
                 </Link>
               </div>
             </div>
@@ -369,6 +299,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+      
+      {/* Referral Debug Component */}
+      <ReferralDebug />
     </div>
   )
 }

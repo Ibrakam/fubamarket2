@@ -107,7 +107,7 @@ export default function CheckoutPage() {
             <p className="text-gray-600">Buyurtma berish uchun tizimga kirish kerak</p>
             <div className="space-y-2">
               <Link href="/login?redirect=checkout">
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                <Button className="w-full">
                   Kirish
                 </Button>
               </Link>
@@ -133,7 +133,7 @@ export default function CheckoutPage() {
           <CardContent className="text-center space-y-4">
             <p className="text-gray-600">Buyurtma berish uchun mahsulotlarni savatga qo'shing</p>
             <Link href="/">
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+              <Button>
                 Xarid qilishni davom ettirish
               </Button>
             </Link>
@@ -156,7 +156,7 @@ export default function CheckoutPage() {
             </p>
             <div className="space-y-2">
               <Link href="/">
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                <Button className="w-full">
                   Xarid qilishga qaytish
                 </Button>
               </Link>

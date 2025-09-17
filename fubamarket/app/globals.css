@@ -1,6 +1,384 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Force CSS refresh - version 1.5 */
+
+/* CSS Variables for spacing */
+:root {
+  --spacing-0: 0px;
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1-5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2-5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3-5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+  --spacing-36: 9rem;
+  --spacing-40: 10rem;
+  --spacing-44: 11rem;
+  --spacing-48: 12rem;
+  --spacing-52: 13rem;
+  --spacing-56: 14rem;
+  --spacing-60: 15rem;
+  --spacing-64: 16rem;
+  --spacing-72: 18rem;
+  --spacing-80: 20rem;
+  --spacing-96: 24rem;
+}
+
+/* Custom spacing classes for missing Tailwind classes */
+.pb-4 {
+  padding-bottom: 1rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.space-y-3 > * + * {
+  margin-top: 0.75rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .sm\:pb-6 {
+    padding-bottom: 1.5rem;
+  }
+  
+  .sm\:px-6 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .sm\:space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+}
+
+/* Explicit button styles to override any caching issues */
+button[data-slot="button"] {
+  background-color: #f97316 !important; /* Orange-500 */
+  color: white !important;
+  border: none !important;
+}
+
+button[data-slot="button"]:hover {
+  background-color: #ea580c !important; /* Orange-600 */
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+button[data-slot="button"].bg-primary {
+  background-color: #f97316 !important;
+  color: white !important;
+}
+
+button[data-slot="button"].bg-secondary {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+button[data-slot="button"].border-primary {
+  border-color: #f97316 !important;
+  color: #f97316 !important;
+  background-color: transparent !important;
+}
+
+button[data-slot="button"].border-primary:hover {
+  background-color: #f97316 !important;
+  color: white !important;
+}
+
+/* Additional universal button styles - but exclude header buttons and burger menu */
+button:not(.header-button):not([data-slot="button"].ghost):not(.ghost):not(.burger-menu-button) {
+  background-color: #f97316 !important;
+  color: white !important;
+  border: none !important;
+}
+
+button:not(.header-button):not([data-slot="button"].ghost):not(.ghost):not(.burger-menu-button):hover {
+  background-color: #ea580c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Special styles for header buttons */
+.header-button,
+button[data-slot="button"].ghost,
+button.ghost {
+  background-color: transparent !important;
+  color: #374151 !important;
+  border: 1px solid transparent !important;
+  transition: all 0.2s ease !important;
+  padding: 0.5rem !important;
+  border-radius: 0.375rem !important;
+}
+
+/* Burger menu button styles - override all orange styles */
+.burger-menu-button {
+  background-color: transparent !important;
+  color: #000000 !important;
+  border: none !important;
+}
+
+.burger-menu-button:hover {
+  background-color: #f9fafb !important;
+  color: #1f2937 !important;
+  transform: scale(1.05) !important;
+}
+
+.header-button:hover,
+button[data-slot="button"].ghost:hover,
+button.ghost:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+  border-color: #e5e7eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Extra specificity for profile button */
+.auth-dropdown .header-button {
+  background-color: transparent !important;
+  color: #374151 !important;
+  border: none !important;
+  padding: 0.5rem !important;
+  border-radius: 0.375rem !important;
+}
+
+.auth-dropdown .header-button:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+  border: 1px solid #e5e7eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Override for specific button types */
+button.bg-secondary {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+/* Profile edit button styles */
+.profile-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25);
+  min-height: 2.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-edit-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transition: left 0.4s ease;
+}
+
+.profile-edit-button:hover::before {
+  left: 100%;
+}
+
+.profile-edit-button:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+}
+
+.profile-edit-button:active {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+}
+
+.profile-edit-button:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
+/* Product page specific button styles */
+.product-page .quantity-button {
+  background-color: #f97316 !important;
+  color: white !important;
+  border: 2px solid #f97316 !important;
+  border-radius: 0.5rem !important;
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2) !important;
+}
+
+.product-page .quantity-button:hover {
+  background-color: #ea580c !important;
+  border-color: #ea580c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3) !important;
+}
+
+.product-page .quantity-button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2) !important;
+}
+
+.product-page .size-button {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 0.5rem !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  background-color: white !important;
+  color: #374151 !important;
+}
+
+.product-page .size-button:hover {
+  border-color: #f97316 !important;
+  background-color: #fef3f0 !important;
+  color: #f97316 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.1) !important;
+}
+
+.product-page .size-button.selected {
+  border-color: #f97316 !important;
+  background-color: #f97316 !important;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2) !important;
+}
+
+.product-page .action-button {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  padding: 0.875rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.product-page .action-button::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+  transition: left 0.5s ease !important;
+}
+
+.product-page .action-button:hover::before {
+  left: 100% !important;
+}
+
+.product-page .action-button:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4) !important;
+}
+
+.product-page .action-button:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3) !important;
+}
+
+.product-page .action-button:disabled {
+  background: #9ca3af !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.product-page .wishlist-button {
+  background-color: transparent !important;
+  color: #374151 !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 0.75rem !important;
+  padding: 0.875rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  transition: all 0.3s ease !important;
+  flex: 1 !important;
+}
+
+.product-page .wishlist-button:hover {
+  border-color: #f97316 !important;
+  background-color: #fef3f0 !important;
+  color: #f97316 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1) !important;
+}
+
+.product-page .wishlist-button.active {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  color: #ef4444 !important;
+}
+
+.product-page .wishlist-button.active:hover {
+  background-color: #fee2e2 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2) !important;
+}
+
+button.border-primary {
+  border: 2px solid #f97316 !important;
+  color: #f97316 !important;
+  background-color: transparent !important;
+}
+
+button.border-primary:hover {
+  background-color: #f97316 !important;
+  color: white !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -51,8 +429,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: 25 95% 53%; /* Оранжевый цвет для кнопок в HSL */
+  --primary-foreground: 0 0% 98%; /* Белый текст на оранжевом фоне в HSL */
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -62,7 +440,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: 25 95% 53%; /* Оранжевое кольцо фокуса в HSL */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -70,12 +448,12 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: 25 95% 53%; /* Оранжевый для сайдбара в HSL */
+  --sidebar-primary-foreground: 0 0% 98%;
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: 25 95% 53%;
 }
 
 .dark {
@@ -85,8 +463,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: 25 95% 60%; /* Более яркий оранжевый для темной темы в HSL */
+  --primary-foreground: 0 0% 98%; /* Белый текст в HSL */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -96,7 +474,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: 25 95% 60%; /* Оранжевое кольцо фокуса для темной темы в HSL */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -104,12 +482,12 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: 25 95% 60%; /* Оранжевый для сайдбара в темной теме в HSL */
+  --sidebar-primary-foreground: 0 0% 98%;
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: 25 95% 60%;
 }
 
 @layer base {
@@ -131,6 +509,15 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Z-index fixes for dropdowns */
+.auth-dropdown {
+  z-index: 9999 !important;
+}
+
+.auth-dropdown-backdrop {
+  z-index: 9998 !important;
 }
 
 @keyframes slideUp {
@@ -420,6 +807,80 @@ button {
   padding: 0;
   margin: 0;
   cursor: pointer;
+}
+
+/* Enhanced button styles */
+.btn-primary {
+  background: linear-gradient(135deg, oklch(0.65 0.15 35), oklch(0.7 0.18 35));
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, oklch(0.6 0.15 35), oklch(0.65 0.18 35));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+  background: oklch(0.97 0 0);
+  color: oklch(0.205 0 0);
+  border: 1px solid oklch(0.922 0 0);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: oklch(0.95 0 0);
+  border-color: oklch(0.8 0 0);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-outline {
+  background: transparent;
+  color: oklch(0.65 0.15 35);
+  border: 2px solid oklch(0.65 0.15 35);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  background: oklch(0.65 0.15 35);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Input styles */

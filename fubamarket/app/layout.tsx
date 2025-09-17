@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/cart-context"
 import { WishlistProvider } from "@/contexts/wishlist-context"
 import { AuthProvider } from "@/contexts/auth-context"
 import SiteHeader from "@/components/site-header"
+import { Toaster } from "sonner"
 
 export const metadata: Metadata = {
   title: "fuba market - Modern e-commerce marketplace",
@@ -41,6 +42,7 @@ html {
             <WishlistProvider>
               <SiteHeader />
               {children}
+              <Toaster position="top-right" richColors />
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>

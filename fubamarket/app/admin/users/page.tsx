@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Download, Eye, Edit, UserPlus, Shield, User, Building } from "lucide-react"
+import { Search, Filter, Download, Eye, Edit, UserPlus, Shield, User, Building, ArrowLeft } from "lucide-react"
 import { UserDetailsModal } from "@/components/user-details-modal"
 import { EditUserModal } from "@/components/edit-user-modal"
 import { AddUserModal } from "@/components/add-user-modal"
@@ -28,7 +28,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
-  const { user, token } = useAuth()
+  const { user, token, loading: authLoading } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,13 +41,20 @@ export default function AdminUsersPage() {
   const [showAddModal, setShowAddModal] = useState(false)
 
   useEffect(() => {
-    if (!user || user.role !== 'superadmin') {
-      router.push('/login')
-      return
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      
+      if (user.role !== 'superadmin') {
+        router.push('/')
+        return
+      }
+      
+      fetchUsers()
     }
-
-    fetchUsers()
-  }, [user, router])
+  }, [user, authLoading, router])
 
   const fetchUsers = async () => {
     try {
@@ -59,7 +66,7 @@ export default function AdminUsersPage() {
       
       if (response.ok) {
         const data = await response.json()
-        setUsers(data.users || [])
+        setUsers(data || [])
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -112,9 +119,15 @@ export default function AdminUsersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-gray-600">Manage all users and their roles</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/admin')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Назад
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">User Management</h1>
+            <p className="text-gray-600">Manage all users and their roles</p>
+          </div>
         </div>
         <Button 
           className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"

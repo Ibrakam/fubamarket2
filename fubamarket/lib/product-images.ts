@@ -1,34 +1,60 @@
-// Функция для получения реального изображения продукта
-export function getProductImage(productName: string, productId: string): string {
-  // Используем реальные изображения из Unsplash для разных типов продуктов
-  const imageMap: Record<string, string> = {
-    "iPhone 15 Pro": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop",
-    "Samsung Galaxy S24": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop",
-    "Nike Air Max": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-    "Adidas T-Shirt": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
-    "Python Programming Book": "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop",
-    "Garden Plant Pot": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
-    "MacBook Pro M3": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
-    "Wireless Headphones": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+// Функция для получения изображения продукта
+export function getProductImage(product: any): string {
+  // Если у продукта есть фотографии из базы данных, используем первую
+  if (product.photos && product.photos.length > 0) {
+    const firstPhoto = product.photos[0]
+    // Проверяем, что это полный URL или относительный путь
+    if (firstPhoto.image) {
+      // Если это полный URL, возвращаем как есть
+      if (firstPhoto.image.startsWith('http')) {
+        return firstPhoto.image
+      }
+      // Если это относительный путь, добавляем базовый URL API
+      return `http://localhost:8000${firstPhoto.image}`
+    }
   }
 
-  // Если есть точное совпадение по названию, используем его
-  if (imageMap[productName]) {
-    return imageMap[productName]
+  // Если нет фотографий из БД, используем дефолтные изображения по категории
+  const defaultImages: Record<string, string> = {
+    'electronics': "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
+    'clothing': "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
+    'shoes': "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
+    'books': "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop",
+    'home': "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
+    'sports': "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+    'beauty': "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop",
+    'toys': "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
   }
 
-  // Иначе используем изображение по умолчанию в зависимости от ID
-  const defaultImages = [
-    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop", // Электроника
-    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop", // Электроника
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop", // Обувь
-    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop", // Одежда
-    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop", // Книги
-    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop", // Растения
-    "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop", // Ноутбуки
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop", // Наушники
-  ]
+  // Пытаемся определить категорию по названию продукта
+  const productName = product.title?.toLowerCase() || ''
+  const categoryName = product.category_name?.toLowerCase() || ''
+  
+  // Проверяем по ключевым словам в названии
+  if (productName.includes('phone') || productName.includes('iphone') || productName.includes('samsung') || productName.includes('galaxy')) {
+    return defaultImages.electronics
+  }
+  if (productName.includes('shirt') || productName.includes('dress') || productName.includes('clothing') || productName.includes('t-shirt')) {
+    return defaultImages.clothing
+  }
+  if (productName.includes('shoe') || productName.includes('nike') || productName.includes('adidas') || productName.includes('sneaker')) {
+    return defaultImages.shoes
+  }
+  if (productName.includes('book') || productName.includes('programming') || productName.includes('python')) {
+    return defaultImages.books
+  }
+  if (productName.includes('plant') || productName.includes('pot') || productName.includes('garden')) {
+    return defaultImages.home
+  }
+  if (productName.includes('headphone') || productName.includes('speaker') || productName.includes('audio')) {
+    return defaultImages.sports
+  }
 
-  const index = parseInt(productId) % defaultImages.length
-  return defaultImages[index] || defaultImages[0]
+  // Проверяем по категории из БД
+  if (categoryName && defaultImages[categoryName]) {
+    return defaultImages[categoryName]
+  }
+
+  // Если ничего не подошло, используем общее дефолтное изображение
+  return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop"
 }

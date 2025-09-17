@@ -41,7 +41,7 @@ export function FeaturedProducts() {
             
             // Если нет реальных фотографий, используем дефолтную функцию
             if (!productImage) {
-              productImage = getProductImage(product.title || product.name || "Untitled Product", String(product.id))
+              productImage = getProductImage(product)
             }
             
             return {

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма отзывов - FubaMarket</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .review-form {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+            margin: 2rem 0;
+        }
+
+        .review-form-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .rating-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .star {
+            width: 2rem;
+            height: 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #d1d5db;
+            fill: currentColor;
+        }
+
+        .star:hover {
+            transform: scale(1.1);
+            color: #ffca28;
+        }
+
+        .star.active {
+            color: #ffca28;
+        }
+
+        .star.filled {
+            color: #ffca28;
+        }
+
+        .rating-text {
+            margin-left: 0.75rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .comment-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .comment-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #374151;
+            background: #fafafa;
+            transition: all 0.2s ease;
+            resize: vertical;
+        }
+
+        .comment-textarea:focus {
+            outline: none;
+            border-color: #ff9800;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+
+        .comment-textarea::placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-button:hover::before {
+            left: 100%;
+        }
+
+        .submit-button:hover {
+            background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+        }
+
+        .submit-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .submit-button:disabled::before {
+            display: none;
+        }
+
+        .no-reviews-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #757575;
+            font-size: 1.1rem;
+            font-weight: 500;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px dashed #e5e7eb;
+            margin: 2rem 0;
+        }
+
+        .no-reviews-message::before {
+            content: '💬';
+            display: block;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        .success-message {
+            color: #059669;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .review-form {
+                padding: 1.5rem;
+                margin: 1rem 0;
+            }
+            
+            .review-form-title {
+                font-size: 1.25rem;
+            }
+            
+            .star {
+                width: 1.75rem;
+                height: 1.75rem;
+            }
+            
+            .comment-textarea {
+                min-height: 100px;
+            }
+            
+            .submit-button {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Focus styles for accessibility */
+        .star:focus-visible {
+            outline: 2px solid #ff9800;
+            outline-offset: 2px;
+        }
+
+        .comment-textarea:focus-visible {
+            outline: 2px solid #ff9800;
+            outline-offset: 2px;
+        }
+
+        .submit-button:focus-visible {
+            outline: 2px solid #ff9800;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Форма отзывов -->
+        <form class="review-form" id="reviewForm">
+            <h3 class="review-form-title">Оставьте свой отзыв</h3>
+            
+            <div class="form-group">
+                <div class="rating-section">
+                    <label class="rating-label">Рейтинг</label>
+                    <div class="star-rating">
+                        <svg class="star" data-rating="1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                        </svg>
+                        <svg class="star" data-rating="2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                        </svg>
+                        <svg class="star" data-rating="3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                        </svg>
+                        <svg class="star" data-rating="4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                        </svg>
+                        <svg class="star" data-rating="5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                        </svg>
+                        <span class="rating-text" id="ratingText"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="comment-section">
+                    <label class="comment-label" for="comment">Комментарий</label>
+                    <textarea
+                        id="comment"
+                        class="comment-textarea"
+                        placeholder="Поделитесь своим опытом с продуктом..."
+                        maxlength="1000"
+                        rows="5"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span>/1000
+                    </div>
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+            <div class="success-message" id="successMessage" style="display: none;"></div>
+
+            <button type="submit" class="submit-button" id="submitButton">
+                Отправить отзыв
+            </button>
+        </form>
+
+        <!-- Сообщение "Пока нет отзывов" -->
+        <div class="no-reviews-message" id="noReviewsMessage" style="display: none;">
+            Пока нет отзывов. Будьте первым!
+        </div>
+    </div>
+
+    <script>
+        let currentRating = 0;
+        let hoveredRating = 0;
+
+        const ratingTexts = {
+            1: 'Ужасно',
+            2: 'Плохо',
+            3: 'Нормально',
+            4: 'Хорошо',
+            5: 'Отлично'
+        };
+
+        const stars = document.querySelectorAll('.star');
+        const ratingText = document.getElementById('ratingText');
+        const commentTextarea = document.getElementById('comment');
+        const charCount = document.getElementById('charCount');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const submitButton = document.getElementById('submitButton');
+        const reviewForm = document.getElementById('reviewForm');
+        const noReviewsMessage = document.getElementById('noReviewsMessage');
+
+        // Обработка звезд рейтинга
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                currentRating = parseInt(star.dataset.rating);
+                updateStars();
+                hideError();
+            });
+
+            star.addEventListener('mouseenter', () => {
+                hoveredRating = parseInt(star.dataset.rating);
+                updateStars();
+            });
+
+            star.addEventListener('mouseleave', () => {
+                hoveredRating = 0;
+                updateStars();
+            });
+        });
+
+        function updateStars() {
+            const displayRating = hoveredRating || currentRating;
+            
+            stars.forEach(star => {
+                const starRating = parseInt(star.dataset.rating);
+                star.classList.remove('active', 'filled');
+                
+                if (starRating <= displayRating) {
+                    star.classList.add('active');
+                }
+            });
+
+            if (displayRating > 0) {
+                ratingText.textContent = ratingTexts[displayRating];
+            } else {
+                ratingText.textContent = '';
+            }
+        }
+
+        // Обработка счетчика символов
+        commentTextarea.addEventListener('input', () => {
+            charCount.textContent = commentTextarea.value.length;
+        });
+
+        // Обработка отправки формы
+        reviewForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (currentRating === 0) {
+                showError('Пожалуйста, выберите рейтинг');
+                return;
+            }
+
+            if (commentTextarea.value.trim().length < 10) {
+                showError('Комментарий должен содержать минимум 10 символов');
+                return;
+            }
+
+            // Имитация отправки
+            submitButton.disabled = true;
+            submitButton.textContent = 'Отправка...';
+            
+            setTimeout(() => {
+                showSuccess('Отзыв успешно отправлен!');
+                currentRating = 0;
+                commentTextarea.value = '';
+                charCount.textContent = '0';
+                updateStars();
+                submitButton.disabled = false;
+                submitButton.textContent = 'Отправить отзыв';
+            }, 2000);
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Показать сообщение "Пока нет отзывов" (для демонстрации)
+        // Раскомментируйте следующую строку, чтобы показать это сообщение:
+        // noReviewsMessage.style.display = 'block';
+    </script>
+</body>
+</html>

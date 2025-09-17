@@ -8,13 +8,13 @@ function fixJSXApostrophesInFile(filePath) {
     // Only fix apostrophes in JSX text content, not in imports or string literals
     // Pattern: > followed by text with unescaped apostrophe, then <
     content = content.replace(/>([^<]*[^&]'[^;][^<]*)</g, (match, text) => {
-      const fixedText = text.replace(/([^&])'([^;])/g, '$1&apos;$2');
+      const fixedText = text.replace(/([^&])'([^;])/g, '$1'$2');
       return '>' + fixedText + '<';
     });
     
     // Fix apostrophes in JSX attributes (but not in string literals)
     content = content.replace(/className="([^"]*[^&]'[^;][^"]*)"/g, (match, className) => {
-      const fixedClassName = className.replace(/([^&])'([^;])/g, '$1&apos;$2');
+      const fixedClassName = className.replace(/([^&])'([^;])/g, '$1'$2');
       return `className="${fixedClassName}"`;
     });
     

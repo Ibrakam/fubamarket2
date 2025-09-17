@@ -19,6 +19,13 @@ export interface Product {
     image?: string
     url?: string
   }>
+  // Реферальная система поля
+  referral_commission?: number
+  referral_enabled?: boolean
+  total_sales?: number
+  sales_percentage?: number
+  booked_quantity?: number
+  stock?: number
 }
 
 export interface CartItem extends Product {

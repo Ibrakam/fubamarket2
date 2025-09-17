@@ -7,13 +7,13 @@ function fixApostrophesInFile(filePath) {
     
     // Fix unescaped apostrophes in JSX text content
     // Pattern: ' followed by non-& character (not already escaped)
-    content = content.replace(/([^&])'([^;])/g, '$1&apos;$2');
+    content = content.replace(/([^&])'([^;])/g, '$1'$2');
     
     // Fix unescaped apostrophes at start of text content
-    content = content.replace(/^'([^;])/gm, '&apos;$1');
+    content = content.replace(/^'([^;])/gm, ''$1');
     
     // Fix unescaped apostrophes in string literals that are not already escaped
-    content = content.replace(/([^&])'([^;])/g, '$1&apos;$2');
+    content = content.replace(/([^&])'([^;])/g, '$1'$2');
     
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`Fixed apostrophes in: ${filePath}`);

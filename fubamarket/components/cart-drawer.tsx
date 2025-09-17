@@ -5,10 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ShoppingCart, Plus, Minus, X } from "lucide-react"
 import { useState } from "react"
+import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
 
 export function CartDrawer() {
   const { items, total, itemCount, updateQuantity, removeItem, proceedToCheckout } = useCart()
   const [isOpen, setIsOpen] = useState(false)
+  
+  // Convert total to UZS
+  const totalInUzs = convertUsdToUzs(total)
 
   const handleCheckout = () => {
     setIsOpen(false)
@@ -18,9 +22,9 @@ export function CartDrawer() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="flex items-center space-x-1 relative">
+        <Button variant="ghost" className="header-button flex items-center space-x-1 relative">
           <ShoppingCart className="w-5 h-5" />
-          <span className="text-sm">${total.toFixed(2)}</span>
+          <span className="text-sm">{formatUzsWithSpaces(totalInUzs)}</span>
           {itemCount > 0 && (
             <span className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {itemCount}
@@ -28,16 +32,16 @@ export function CartDrawer() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Xarid savati ({itemCount} ta mahsulot)</SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6 flex-1 overflow-y-auto">
+        <div className="mt-6 flex-1 overflow-y-auto max-h-[calc(100vh-200px)]">
           {items.length === 0 ? (
             <div className="text-center py-8">
               <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">Sizning savatingiz bo&apos;sh</p>
+              <p className="text-gray-500">Sizning savatingiz bo'sh</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -50,7 +54,7 @@ export function CartDrawer() {
                   />
                   <div className="flex-1">
                     <h3 className="font-medium text-sm">{item.name}</h3>
-                    <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-500">{formatUzsWithSpaces(convertUsdToUzs(item.price))}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <Button
                         size="sm"
@@ -72,7 +76,7 @@ export function CartDrawer() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-medium">{formatUzsWithSpaces(convertUsdToUzs(item.price * item.quantity))}</p>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -91,13 +95,13 @@ export function CartDrawer() {
         {items.length > 0 && (
           <div className="border-t pt-4 mt-6">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-bold">Jami: ${total.toFixed(2)}</span>
+              <span className="text-lg font-bold">Jami: {formatUzsWithSpaces(totalInUzs)}</span>
             </div>
             <div className="space-y-2">
-              <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700" onClick={handleCheckout}>
+              <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm sm:text-base py-3" onClick={handleCheckout}>
                 Buyurtma berish
               </Button>
-              <Button variant="outline" className="w-full bg-transparent" onClick={() => setIsOpen(false)}>
+              <Button variant="outline" className="w-full bg-transparent text-sm sm:text-base py-3" onClick={() => setIsOpen(false)}>
                 Xarid qilishni davom ettirish
               </Button>
             </div>

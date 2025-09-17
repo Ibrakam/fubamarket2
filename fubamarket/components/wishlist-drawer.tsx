@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Heart, ShoppingCart, X, Star } from "lucide-react"
 import { useState } from "react"
+import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
 
 export function WishlistDrawer() {
   const { items, itemCount, removeItem, clearWishlist } = useWishlist()
   const { addItem: addToCart } = useCart()
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: { id: string; name: string; price: number; image: string; category: string; inStock: boolean; description: string; photos: Array<{ id: number; url: string }> }) => {
     addToCart(product)
     // Optionally remove from wishlist after adding to cart
     // removeItem(product.id)
@@ -21,7 +22,7 @@ export function WishlistDrawer() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="flex items-center space-x-1 relative">
+        <Button variant="ghost" className="header-button flex items-center space-x-1 relative">
           <span className="text-sm">ISTAKLAR ({itemCount})</span>
           <Heart className="w-5 h-5" />
           {itemCount > 0 && (
@@ -31,7 +32,7 @@ export function WishlistDrawer() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
             <span>Istaklar ro'yxati ({itemCount} ta mahsulot)</span>
@@ -43,12 +44,12 @@ export function WishlistDrawer() {
           </SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6 flex-1 overflow-y-auto">
+        <div className="mt-6 flex-1 overflow-y-auto max-h-[calc(100vh-200px)]">
           {items.length === 0 ? (
             <div className="text-center py-8">
               <Heart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500 mb-2">Sizning ishtiyoqlar ro&apos;yxatingiz bo&apos;sh</p>
-              <p className="text-sm text-gray-400">Keyinroq saqlash uchun yoqtirgan mahsulotlarni qo&apos;shing</p>
+              <p className="text-gray-500 mb-2">Sizning ishtiyoqlar ro'yxatingiz bo'sh</p>
+              <p className="text-sm text-gray-400">Keyinroq saqlash uchun yoqtirgan mahsulotlarni qo'shing</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -70,7 +71,7 @@ export function WishlistDrawer() {
                       </div>
                       <span className="text-xs text-gray-500 ml-1">({item.rating})</span>
                     </div>
-                    <p className="font-bold text-lg mt-1">${item.price.toFixed(2)}</p>
+                    <p className="font-bold text-lg mt-1">{formatUzsWithSpaces(convertUsdToUzs(item.price))}</p>
                   </div>
                   <div className="flex flex-col space-y-2">
                     <Button
@@ -102,7 +103,7 @@ export function WishlistDrawer() {
           <div className="border-t pt-4 mt-6">
             <div className="space-y-2">
               <Button
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm sm:text-base py-3"
                 onClick={() => {
                   items.forEach((item) => addToCart(item))
                   clearWishlist()
@@ -110,7 +111,7 @@ export function WishlistDrawer() {
               >
                 Hammasini savatga qo'shish
               </Button>
-              <Button variant="outline" className="w-full bg-transparent" onClick={() => setIsOpen(false)}>
+              <Button variant="outline" className="w-full bg-transparent text-sm sm:text-base py-3" onClick={() => setIsOpen(false)}>
                 Xarid qilishni davom ettirish
               </Button>
             </div>

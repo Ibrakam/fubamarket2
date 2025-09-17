@@ -1,17 +1,85 @@
 "use client"
 
-import { useState } from "react"
-import { Search, ArrowLeft } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, ArrowLeft, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ProductCard } from "@/components/product-card"
 import { useProductFilters } from "@/hooks/use-product-filters"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 
 export default function ShopPage() {
   const { filteredProducts, loading, searchQuery, setSearchQuery } = useProductFilters()
   const [currentPage, setCurrentPage] = useState(1)
+  const [localSearchQuery, setLocalSearchQuery] = useState("")
   const productsPerPage = 12
+  const searchParams = useSearchParams()
+  
+  // Читаем поисковый запрос из URL параметров только при загрузке страницы
+  useEffect(() => {
+    const query = searchParams.get('q')
+    console.log("URL query parameter:", query)
+    
+    if (query !== null) {
+      console.log("Setting search query from URL:", query)
+      setSearchQuery(query)
+      setLocalSearchQuery(query)
+    }
+  }, [searchParams, setSearchQuery])
+  
+  console.log("Shop page - searchQuery:", searchQuery)
+  console.log("Shop page - filteredProducts count:", filteredProducts.length)
+
+  // Debounced search function
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (localSearchQuery !== searchQuery) {
+        console.log("Updating search query from local:", localSearchQuery)
+        setSearchQuery(localSearchQuery)
+        // Update URL
+        if (localSearchQuery.trim()) {
+          window.history.replaceState({}, '', `/shop?q=${encodeURIComponent(localSearchQuery)}`)
+        } else {
+          window.history.replaceState({}, '', '/shop')
+        }
+      }
+    }, 300) // 300ms delay
+
+    return () => clearTimeout(timeoutId)
+  }, [localSearchQuery, searchQuery, setSearchQuery])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log("Search form submitted:", localSearchQuery)
+    setSearchQuery(localSearchQuery)
+    if (localSearchQuery.trim()) {
+      window.history.replaceState({}, '', `/shop?q=${encodeURIComponent(localSearchQuery)}`)
+    } else {
+      window.history.replaceState({}, '', '/shop')
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      console.log("Enter pressed, search query:", localSearchQuery)
+      setSearchQuery(localSearchQuery)
+      if (localSearchQuery.trim()) {
+        window.history.replaceState({}, '', `/shop?q=${encodeURIComponent(localSearchQuery)}`)
+      } else {
+        window.history.replaceState({}, '', '/shop')
+      }
+    }
+  }
+
+  const handleClearSearch = () => {
+    console.log("Clearing search from shop page")
+    setLocalSearchQuery("")
+    setSearchQuery("")
+    // Обновляем URL без параметра q
+    window.history.replaceState({}, '', '/shop')
+  }
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage)
   const startIndex = (currentPage - 1) * productsPerPage
@@ -24,8 +92,8 @@ export default function ShopPage() {
         <div className="container mx-auto px-4">
           <div className="flex items-center space-x-4 mb-4">
             <Link href="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+              <Button variant="ghost" size="sm" className="px-4 py-2">
+                <ArrowLeft className="w-4 h-4 mr-3" />
                 Bosh sahifaga qaytish
               </Button>
             </Link>
@@ -38,13 +106,28 @@ export default function ShopPage() {
 
             {/* Search */}
             <div className="relative w-96">
-              <Input
-                placeholder="Mahsulotlarni qidiring..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <form onSubmit={handleSearch}>
+                <Input
+                  placeholder="Mahsulotlarni qidiring..."
+                  value={localSearchQuery}
+                  onChange={(e) => {
+                    console.log("Input changed:", e.target.value)
+                    setLocalSearchQuery(e.target.value)
+                  }}
+                  onKeyPress={handleKeyPress}
+                  className="pr-10"
+                />
+              </form>
+              {localSearchQuery ? (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              ) : (
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              )}
             </div>
           </div>
         </div>
@@ -123,7 +206,7 @@ export default function ShopPage() {
               }
             </p>
             {searchQuery && (
-              <Button onClick={() => setSearchQuery("")} className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+              <Button onClick={() => setSearchQuery("")} variant="outline">
                 Qidiruvni tozalash
               </Button>
             )}

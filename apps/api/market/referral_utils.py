@@ -12,6 +12,10 @@ def generate_anonymous_id():
     """Генерирует уникальный ID для анонимного пользователя"""
     return str(uuid.uuid4())
 
+def generate_referral_code():
+    """Генерирует уникальный код реферальной ссылки"""
+    return str(uuid.uuid4())[:8].upper()
+
 def get_or_create_anonymous_id(request):
     """Получает или создает anonymous_id для пользователя"""
     anonymous_id = request.COOKIES.get('anonymous_id')

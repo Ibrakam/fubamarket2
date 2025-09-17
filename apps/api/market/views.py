@@ -3,26 +3,27 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.db.models import Sum, Count, Q
-from django.db import transaction
+from django.db.models import Sum
 from datetime import timedelta
-from rest_framework.exceptions import PermissionDenied
 import logging
+import time
 
 from .models import (
     ReferralProgram, ReferralLink, ReferralVisit, ReferralAttribution,
-    ReferralReward, ReferralPayout, ReferralBalance, User, Product, Category, Order, OrderItem, WithdrawalRequest, ProductImage
+    ReferralReward, ReferralPayout, ReferralBalance, User, Product,
+    Category, Order, WithdrawalRequest, ProductImage, Review
 )
 from .serializers import (
     ReferralProgramSerializer, ReferralLinkSerializer, ReferralLinkCreateSerializer,
-    ReferralVisitSerializer, ReferralAttributionSerializer, ReferralRewardSerializer,
-    ReferralRewardUpdateSerializer, ReferralPayoutSerializer, ReferralPayoutCreateSerializer,
-    ReferralBalanceSerializer, ReferralStatsSerializer, ReferralLinkStatsSerializer,
-    ProductSerializer, ProductCreateSerializer, CategorySerializer, OrderSerializer, WithdrawalRequestSerializer,
-    UserSerializer, ProductImageSerializer
+    ReferralRewardSerializer, ReferralRewardUpdateSerializer, ReferralPayoutSerializer,
+    ReferralPayoutCreateSerializer, ReferralBalanceSerializer, ReferralLinkStatsSerializer,
+    ProductSerializer, ProductCreateSerializer, CategorySerializer, OrderSerializer,
+    WithdrawalRequestSerializer, UserSerializer, ProductImageSerializer, ReviewSerializer, ReviewCreateSerializer
 )
+from .referral_utils import generate_referral_code
 
 logger = logging.getLogger(__name__)
+
 
 # Referral Program Management
 class ReferralProgramListCreateView(generics.ListCreateAPIView):
@@ -30,12 +31,14 @@ class ReferralProgramListCreateView(generics.ListCreateAPIView):
     serializer_class = ReferralProgramSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
 class ReferralProgramDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ReferralProgram.objects.all()
     serializer_class = ReferralProgramSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-# Referral Links Management - только для админов
+
+# Referral Links Management
 class ReferralLinkListCreateView(generics.ListCreateAPIView):
     serializer_class = ReferralLinkSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -51,10 +54,8 @@ class ReferralLinkListCreateView(generics.ListCreateAPIView):
         return ReferralLinkSerializer
 
     def perform_create(self, serializer):
-        # Только админы могут создавать реферальные ссылки
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать реферальные ссылки")
         serializer.save(user=self.request.user)
+
 
 class ReferralLinkDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReferralLinkSerializer
@@ -65,6 +66,7 @@ class ReferralLinkDetailView(generics.RetrieveUpdateDestroyAPIView):
             return ReferralLink.objects.all()
         return ReferralLink.objects.filter(user=self.request.user)
 
+
 class ReferralLinkStatsView(generics.RetrieveAPIView):
     serializer_class = ReferralLinkStatsSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -74,454 +76,255 @@ class ReferralLinkStatsView(generics.RetrieveAPIView):
             return ReferralLink.objects.all()
         return ReferralLink.objects.filter(user=self.request.user)
 
-# Referral Visits Tracking
+
+# Visit Tracking (public endpoint)
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def track_referral_visit(request):
-    """Отслеживает посещение по реферальной ссылке"""
+    """Отслеживание перехода по реферальной ссылке"""
     try:
-        data = request.data
-        referral_code = data.get('referral_code')
-        anonymous_id = data.get('anonymous_id')
-        
+        referral_code = request.data.get('referral_code')
+        anonymous_id = request.data.get('anonymous_id')
+        ip_address = request.META.get('REMOTE_ADDR')
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+
         if not referral_code or not anonymous_id:
             return Response(
-                {'error': 'referral_code и anonymous_id обязательны'}, 
+                {'error': 'referral_code и anonymous_id обязательны'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Находим реферальную ссылку
         try:
             referral_link = ReferralLink.objects.get(code=referral_code, is_active=True)
         except ReferralLink.DoesNotExist:
             return Response(
-                {'error': 'Реферальная ссылка не найдена или неактивна'}, 
+                {'error': 'Реферальная ссылка не найдена'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Создаем запись о посещении
-        visit_data = {
-            'referral_link': referral_link.id,
-            'anonymous_id': anonymous_id,
-            'ip_address': request.META.get('REMOTE_ADDR'),
-            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
-            'utm_source': data.get('utm_source'),
-            'utm_medium': data.get('utm_medium'),
-            'utm_campaign': data.get('utm_campaign'),
-        }
-        
-        if request.user.is_authenticated:
-            visit_data['user'] = request.user.id
+        # Создаем запись о переходе
+        visit = ReferralVisit.objects.create(
+            referral_link=referral_link,
+            anonymous_id=anonymous_id,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
 
-        serializer = ReferralVisitSerializer(data=visit_data)
-        if serializer.is_valid():
-            visit = serializer.save()
-            
-            # Обновляем счетчик кликов
-            referral_link.total_clicks += 1
-            referral_link.save(update_fields=['total_clicks'])
-            
-            # Создаем или обновляем атрибуцию
-            create_or_update_attribution(referral_link, anonymous_id, request.user, visit)
-            
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+        referral_link.total_clicks += 1
+        referral_link.save()
+
+        return Response({
+            'success': True,
+            'message': 'Переход успешно отслежен',
+            'visit_id': visit.id
+        }, status=status.HTTP_201_CREATED)
+
     except Exception as e:
-        logger.error(f"Error tracking referral visit: {e}")
+        logger.error(f'Error tracking visit: {str(e)}')
         return Response(
-            {'error': 'Ошибка при отслеживании посещения'}, 
+            {'error': 'Ошибка при отслеживании перехода'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-def create_or_update_attribution(referral_link, anonymous_id, user, visit):
-    """Создает или обновляет атрибуцию реферала"""
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def track_referral_conversion(request):
+    """Отслеживание конверсии по реферальной ссылке"""
     try:
-        # Получаем настройки реферальной программы
-        program = ReferralProgram.objects.filter(is_active=True).first()
-        if not program:
-            return
+        referral_code = request.data.get('referral_code')
+        anonymous_id = request.data.get('anonymous_id')
+        product_id = request.data.get('product_id')
+        order_id = request.data.get('order_id')
+        amount = request.data.get('amount', 0)
 
-        # Определяем продукт для атрибуции
-        product = referral_link.product
-        if not product:
-            # Если ссылка не привязана к конкретному товару, 
-            # атрибуция будет создана при покупке любого товара
-            return
+        if not referral_code or not anonymous_id:
+            return Response(
+                {'error': 'referral_code и anonymous_id обязательны'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Создаем или обновляем атрибуцию
-        attribution, created = ReferralAttribution.objects.update_or_create(
+        try:
+            referral_link = ReferralLink.objects.get(code=referral_code, is_active=True)
+        except ReferralLink.DoesNotExist:
+            return Response(
+                {'error': 'Реферальная ссылка не найдена'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        attribution, created = ReferralAttribution.objects.get_or_create(
+            referral_link=referral_link,
             anonymous_id=anonymous_id,
-            product=product,
             defaults={
-                'user': user,
-                'referral_link': referral_link,
-                'expires_at': timezone.now() + timedelta(days=program.attribution_window_days),
-                'last_visit': visit
+                'converted': True,
+                'conversion_date': timezone.now(),
+                'product_id': product_id,
+                'order_id': order_id,
+                'conversion_amount': amount
             }
         )
-        
-        logger.info(f"Attribution {'created' if created else 'updated'} for {anonymous_id}")
-        
-    except Exception as e:
-        logger.error(f"Error creating attribution: {e}")
 
-# Referral Rewards Management - только для админов
+        if not created:
+            attribution.converted = True
+            attribution.conversion_date = timezone.now()
+            attribution.product_id = product_id
+            attribution.order_id = order_id
+            attribution.conversion_amount = amount
+            attribution.save()
+
+        referral_link.total_conversions += 1
+        referral_link.total_rewards += float(amount) * (referral_link.product.referral_commission / 100) if referral_link.product else 0
+        referral_link.save()
+
+        if referral_link.user and referral_link.product:
+            reward_amount = float(amount) * (referral_link.product.referral_commission / 100)
+            ReferralReward.objects.create(
+                user=referral_link.user,
+                referral_link=referral_link,
+                product=referral_link.product,
+                amount=reward_amount,
+                status='pending'
+            )
+
+        return Response({
+            'success': True,
+            'message': 'Конверсия успешно отслежена',
+            'attribution_id': attribution.id
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f'Error tracking conversion: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при отслеживании конверсии'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# Referral Rewards
 class ReferralRewardListView(generics.ListAPIView):
     serializer_class = ReferralRewardSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return ReferralReward.objects.all()
-        return ReferralReward.objects.filter(attributed_user=self.request.user)
+        return ReferralReward.objects.filter(user=self.request.user)
+
 
 class ReferralRewardUpdateView(generics.UpdateAPIView):
     serializer_class = ReferralRewardUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return ReferralReward.objects.all()
-        return ReferralReward.objects.filter(attributed_user=self.request.user)
+        return ReferralReward.objects.filter(user=self.request.user)
+
 
 @api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def process_referral_purchase(request):
-    """Обрабатывает покупку с реферальной атрибуцией"""
+    """Обработка покупки по реферальной ссылке"""
     try:
-        order_id = request.data.get('order_id')
+        referral_code = request.data.get('referral_code')
         anonymous_id = request.data.get('anonymous_id')
-        
-        if not order_id:
+        product_id = request.data.get('product_id')
+        order_id = request.data.get('order_id')
+        amount = request.data.get('amount', 0)
+
+        if not referral_code or not anonymous_id:
             return Response(
-                {'error': 'order_id обязателен'}, 
+                {'error': 'referral_code и anonymous_id обязательны'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Находим заказ
-        from .models import Order
         try:
-            order = Order.objects.get(id=order_id)
-        except Order.DoesNotExist:
+            referral_link = ReferralLink.objects.get(code=referral_code, is_active=True)
+        except ReferralLink.DoesNotExist:
             return Response(
-                {'error': 'Заказ не найден'}, 
+                {'error': 'Реферальная ссылка не найдена'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Ищем атрибуцию для товаров в заказе
-        attributions = []
-        for item in order.items.all():
-            attribution = ReferralAttribution.objects.filter(
-                Q(anonymous_id=anonymous_id) | Q(user=request.user),
-                product=item.product,
-                expires_at__gt=timezone.now()
-            ).first()
-            
-            if attribution:
-                attributions.append((attribution, item))
+        # Создаем атрибуцию
+        attribution, created = ReferralAttribution.objects.get_or_create(
+            referral_link=referral_link,
+            anonymous_id=anonymous_id,
+            defaults={
+                'converted': True,
+                'conversion_date': timezone.now(),
+                'product_id': product_id,
+                'order_id': order_id,
+                'conversion_amount': amount
+            }
+        )
 
-        if not attributions:
-            return Response(
-                {'message': 'Нет активных реферальных атрибуций для этого заказа'}, 
-                status=status.HTTP_200_OK
+        if not created:
+            attribution.converted = True
+            attribution.conversion_date = timezone.now()
+            attribution.product_id = product_id
+            attribution.order_id = order_id
+            attribution.conversion_amount = amount
+            attribution.save()
+
+        # Обновляем статистику ссылки
+        referral_link.total_conversions += 1
+        referral_link.total_rewards += float(amount) * (referral_link.product.referral_commission / 100) if referral_link.product else 0
+        referral_link.save()
+
+        # Создаем вознаграждение
+        if referral_link.user and referral_link.product:
+            reward_amount = float(amount) * (referral_link.product.referral_commission / 100)
+            ReferralReward.objects.create(
+                user=referral_link.user,
+                referral_link=referral_link,
+                product=referral_link.product,
+                amount=reward_amount,
+                status='pending'
             )
 
-        # Создаем вознаграждения
-        rewards_created = []
-        with transaction.atomic():
-            for attribution, order_item in attributions:
-                reward = create_referral_reward(attribution, order, order_item, request)
-                if reward:
-                    rewards_created.append(reward)
+            # Обновляем баланс пользователя
+            balance, created = ReferralBalance.objects.get_or_create(
+                user=referral_link.user,
+                defaults={
+                    'total_earned': 0,
+                    'locked_amount': 0,
+                    'available_amount': 0,
+                    'total_paid_out': 0
+                }
+            )
+            balance.total_earned += reward_amount
+            balance.available_amount += reward_amount
+            balance.save()
 
         return Response({
-            'message': f'Создано {len(rewards_created)} вознаграждений',
-            'rewards': ReferralRewardSerializer(rewards_created, many=True).data
+            'success': True,
+            'message': 'Покупка успешно обработана',
+            'attribution_id': attribution.id
         }, status=status.HTTP_201_CREATED)
-        
+
     except Exception as e:
-        logger.error(f"Error processing referral purchase: {e}")
+        logger.error(f'Error processing purchase: {str(e)}')
         return Response(
-            {'error': 'Ошибка при обработке реферальной покупки'}, 
+            {'error': 'Ошибка при обработке покупки'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-def create_referral_reward(attribution, order, order_item, request):
-    """Создает вознаграждение за реферальную покупку"""
-    try:
-        # Получаем настройки реферальной программы
-        program = ReferralProgram.objects.filter(is_active=True).first()
-        if not program:
-            return None
 
-        # Рассчитываем сумму вознаграждения
-        order_amount = order_item.price * order_item.quantity
-        reward_percentage = program.reward_percentage
-        reward_amount = (order_amount * reward_percentage) / 100
-        
-        # Применяем максимальную сумму вознаграждения
-        if program.max_reward_amount and reward_amount > program.max_reward_amount:
-            reward_amount = program.max_reward_amount
-
-        # Проверяем анти-фрод
-        fraud_score = calculate_fraud_score(attribution, order, request)
-        if fraud_score > 0.8:  # Высокий риск мошенничества
-            logger.warning(f"High fraud score {fraud_score} for attribution {attribution.id}")
-            return None
-
-        # Создаем вознаграждение
-        reward = ReferralReward.objects.create(
-            referral_link=attribution.referral_link,
-            order=order,
-            attributed_user=attribution.referral_link.user,
-            product=attribution.product,
-            order_amount=order_amount,
-            reward_percentage=reward_percentage,
-            reward_amount=reward_amount,
-            locked_amount=reward_amount,  # Блокируем всю сумму
-            fraud_score=fraud_score,
-            ip_address=request.META.get('REMOTE_ADDR'),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')
-        )
-
-        # Обновляем статистику реферальной ссылки
-        attribution.referral_link.total_conversions += 1
-        attribution.referral_link.total_rewards += reward_amount
-        attribution.referral_link.save(update_fields=['total_conversions', 'total_rewards'])
-
-        logger.info(f"Created referral reward {reward.id} for {reward_amount}")
-        return reward
-        
-    except Exception as e:
-        logger.error(f"Error creating referral reward: {e}")
-        return None
-
-def calculate_fraud_score(attribution, order, request):
-    """Рассчитывает оценку риска мошенничества"""
-    score = 0.0
-    
-    # Проверяем IP адрес
-    if attribution.last_visit.ip_address != request.META.get('REMOTE_ADDR'):
-        score += 0.3
-    
-    # Проверяем User-Agent
-    if attribution.last_visit.user_agent != request.META.get('HTTP_USER_AGENT'):
-        score += 0.2
-    
-    # Проверяем время между посещением и покупкой
-    time_diff = timezone.now() - attribution.last_visit.visited_at
-    if time_diff.total_seconds() < 60:  # Менее минуты
-        score += 0.4
-    elif time_diff.total_seconds() < 300:  # Менее 5 минут
-        score += 0.2
-    
-    # Проверяем количество покупок с этой атрибуции
-    recent_rewards = ReferralReward.objects.filter(
-        referral_link=attribution.referral_link,
-        created_at__gte=timezone.now() - timedelta(hours=24)
-    ).count()
-    
-    if recent_rewards > 5:
-        score += 0.3
-    
-    return min(score, 1.0)
-
-# Referral Payouts Management - только для админов
+# Payout Management
 class ReferralPayoutListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReferralPayoutSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role == 'superadmin':
+            return ReferralPayout.objects.all()
+        return ReferralPayout.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return ReferralPayoutCreateSerializer
         return ReferralPayoutSerializer
 
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return ReferralPayout.objects.all()
-
-# Product Management - только для админов
-class ProductListCreateView(generics.ListCreateAPIView):
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()  # Вендоры не могут видеть продукты
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return ProductCreateSerializer
-        return ProductSerializer
-
     def perform_create(self, serializer):
-        # Только админы могут создавать продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать продукты")
-        serializer.save(vendor=self.request.user)
-
-class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()
-
-    def perform_update(self, serializer):
-        # Только админы могут обновлять продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут обновлять продукты")
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        # Только админы могут удалять продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут удалять продукты")
-        instance.delete()
-
-# Category Management - только для админов
-class CategoryListCreateView(generics.ListCreateAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
-
-    def perform_create(self, serializer):
-        # Только админы могут создавать категории
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать категории")
-        serializer.save()
-
-class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
-
-# Order Management - только для админов
-class OrderListCreateView(generics.ListCreateAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Order.objects.all()
-        return Order.objects.none()
-
-class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Order.objects.all()
-        return Order.objects.none()
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def update_order_status(request, order_id):
-    """Обновляет статус заказа - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обновлять статус заказов'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    try:
-        order = Order.objects.get(id=order_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in Order.STATUS_CHOICES]:
-            return Response(
-                {'error': 'Неверный статус'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        order.status = new_status
-        order.save()
-        
-        return Response({'message': 'Статус заказа обновлен'})
-        
-    except Order.DoesNotExist:
-        return Response(
-            {'error': 'Заказ не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-
-# Withdrawal Management - только для админов
-class WithdrawalRequestListCreateView(generics.ListCreateAPIView):
-    serializer_class = WithdrawalRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
-
-class WithdrawalRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = WithdrawalRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def process_withdrawal(request, withdrawal_id):
-    """Обрабатывает запрос на вывод средств - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обрабатывать запросы на вывод'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    try:
-        withdrawal = WithdrawalRequest.objects.get(id=withdrawal_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in WithdrawalRequest.STATUS_CHOICES]:
-            return Response(
-                {'error': 'Неверный статус'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        withdrawal.status = new_status
-        withdrawal.processed_by = request.user
-        withdrawal.processed_at = timezone.now()
-        
-        if new_status == 'rejected':
-            withdrawal.rejection_reason = request.data.get('rejection_reason', '')
-        
-        withdrawal.save()
-        
-        return Response({'message': 'Запрос на вывод обработан'})
-        
-    except WithdrawalRequest.DoesNotExist:
-        return Response(
-            {'error': 'Запрос на вывод не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-        return ReferralPayout.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        # Только админы могут создавать запросы на выплату
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать запросы на выплату")
         serializer.save(user=self.request.user)
+
 
 class ReferralPayoutDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReferralPayoutSerializer
@@ -530,236 +333,575 @@ class ReferralPayoutDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         if self.request.user.role == 'superadmin':
             return ReferralPayout.objects.all()
-
-# Product Management - только для админов
-class ProductListCreateView(generics.ListCreateAPIView):
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()  # Вендоры не могут видеть продукты
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return ProductCreateSerializer
-        return ProductSerializer
-
-    def perform_create(self, serializer):
-        # Только админы могут создавать продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать продукты")
-        serializer.save(vendor=self.request.user)
-
-class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()
-
-    def perform_update(self, serializer):
-        # Только админы могут обновлять продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут обновлять продукты")
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        # Только админы могут удалять продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут удалять продукты")
-        instance.delete()
-
-# Category Management - только для админов
-class CategoryListCreateView(generics.ListCreateAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
-
-    def perform_create(self, serializer):
-        # Только админы могут создавать категории
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать категории")
-        serializer.save()
-
-class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
-
-# Order Management - только для админов
-class OrderListCreateView(generics.ListCreateAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Order.objects.all()
-        return Order.objects.none()
-
-class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Order.objects.all()
-        return Order.objects.none()
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def update_order_status(request, order_id):
-    """Обновляет статус заказа - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обновлять статус заказов'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    try:
-        order = Order.objects.get(id=order_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in Order.STATUS_CHOICES]:
-            return Response(
-                {'error': 'Неверный статус'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        order.status = new_status
-        order.save()
-        
-        return Response({'message': 'Статус заказа обновлен'})
-        
-    except Order.DoesNotExist:
-        return Response(
-            {'error': 'Заказ не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-
-# Withdrawal Management - только для админов
-class WithdrawalRequestListCreateView(generics.ListCreateAPIView):
-    serializer_class = WithdrawalRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
-
-class WithdrawalRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = WithdrawalRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def process_withdrawal(request, withdrawal_id):
-    """Обрабатывает запрос на вывод средств - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обрабатывать запросы на вывод'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    try:
-        withdrawal = WithdrawalRequest.objects.get(id=withdrawal_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in WithdrawalRequest.STATUS_CHOICES]:
-            return Response(
-                {'error': 'Неверный статус'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        withdrawal.status = new_status
-        withdrawal.processed_by = request.user
-        withdrawal.processed_at = timezone.now()
-        
-        if new_status == 'rejected':
-            withdrawal.rejection_reason = request.data.get('rejection_reason', '')
-        
-        withdrawal.save()
-        
-        return Response({'message': 'Запрос на вывод обработан'})
-        
-    except WithdrawalRequest.DoesNotExist:
-        return Response(
-            {'error': 'Запрос на вывод не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-
         return ReferralPayout.objects.filter(user=self.request.user)
 
-# Referral Balance - только для админов
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def request_payout(request):
+    """Запрос на выплату реферальных вознаграждений"""
+    try:
+        amount = request.data.get('amount')
+        payment_method = request.data.get('payment_method', 'bank_transfer')
+        account_details = request.data.get('account_details', '')
+
+        if not amount or float(amount) <= 0:
+            return Response(
+                {'error': 'Сумма должна быть больше 0'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            balance = ReferralBalance.objects.get(user=request.user)
+            if balance.available_balance < float(amount):
+                return Response(
+                    {'error': 'Недостаточно средств на балансе'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except ReferralBalance.DoesNotExist:
+            return Response(
+                {'error': 'Баланс не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        payout = ReferralPayout.objects.create(
+            user=request.user,
+            amount=amount,
+            payment_method=payment_method,
+            account_details=account_details,
+            status='pending'
+        )
+
+        return Response({
+            'success': True,
+            'message': 'Запрос на выплату создан',
+            'payout_id': payout.id
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f'Error creating payout request: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при создании запроса на выплату'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def approve_payout(request, pk):
+    """Одобрение выплаты (только для админов)"""
+    try:
+        if request.user.role != 'superadmin':
+            return Response(
+                {'error': 'Недостаточно прав'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        payout = get_object_or_404(ReferralPayout, pk=pk)
+
+        if payout.status != 'pending':
+            return Response(
+                {'error': 'Выплата уже обработана'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        payout.status = 'approved'
+        payout.processed_by = request.user
+        payout.processed_at = timezone.now()
+        payout.save()
+
+        balance = ReferralBalance.objects.get(user=payout.user)
+        balance.available_balance -= payout.amount
+        balance.paid_balance += payout.amount
+        balance.save()
+
+        return Response({
+            'success': True,
+            'message': 'Выплата одобрена'
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f'Error approving payout: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при одобрении выплаты'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def reject_payout(request, pk):
+    """Отклонение выплаты (только для админов)"""
+    try:
+        if request.user.role != 'superadmin':
+            return Response(
+                {'error': 'Недостаточно прав'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        payout = get_object_or_404(ReferralPayout, pk=pk)
+        rejection_reason = request.data.get('reason', '')
+
+        if payout.status != 'pending':
+            return Response(
+                {'error': 'Выплата уже обработана'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        payout.status = 'rejected'
+        payout.processed_by = request.user
+        payout.processed_at = timezone.now()
+        payout.rejection_reason = rejection_reason
+        payout.save()
+
+        return Response({
+            'success': True,
+            'message': 'Выплата отклонена'
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f'Error rejecting payout: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при отклонении выплаты'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# Balance Management
 class ReferralBalanceView(generics.RetrieveAPIView):
     serializer_class = ReferralBalanceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут просматривать баланс")
-        balance, created = ReferralBalance.objects.get_or_create(user=self.request.user)
-        balance.update_balance()  # Обновляем баланс
+        balance, created = ReferralBalance.objects.get_or_create(
+            user=self.request.user,
+            defaults={
+                'total_earned': 0,
+                'locked_amount': 0,
+                'available_amount': 0,
+                'total_paid_out': 0
+            }
+        )
         return balance
 
-# Statistics - только для админов
+
+# Statistics
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def referral_stats(request):
-    """Получает статистику реферальной программы для пользователя"""
+    """Общая статистика реферальной программы (только для админов)"""
     try:
         if request.user.role != 'superadmin':
             return Response(
-                {'error': 'Только администраторы могут просматривать статистику'}, 
+                {'error': 'Только администраторы могут просматривать статистику'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        user = request.user
-        
-        # Статистика по ссылкам
-        links = ReferralLink.objects.filter(user=user)
-        total_links = links.count()
-        total_clicks = links.aggregate(Sum('total_clicks'))['total_clicks__sum'] or 0
-        total_conversions = links.aggregate(Sum('total_conversions'))['total_conversions__sum'] or 0
-        total_rewards = links.aggregate(Sum('total_rewards'))['total_rewards__sum'] or 0
-        
+
+        total_links = ReferralLink.objects.count()
+        active_links = ReferralLink.objects.filter(is_active=True).count()
+        total_clicks = ReferralVisit.objects.count()
+        total_conversions = ReferralAttribution.objects.filter(converted=True).count()
+        total_rewards = ReferralReward.objects.aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+
         conversion_rate = (total_conversions / total_clicks * 100) if total_clicks > 0 else 0
-        average_reward = (total_rewards / total_conversions) if total_conversions > 0 else 0
-        
-        stats = {
+
+        return Response({
             'total_links': total_links,
+            'active_links': active_links,
+            'total_clicks': total_clicks,
+            'total_conversions': total_conversions,
+            'total_rewards': float(total_rewards),
+            'conversion_rate': conversion_rate
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f'Error fetching stats: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при получении статистики'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_referral_stats(request):
+    """Статистика реферальной программы для пользователя"""
+    try:
+        user = request.user
+
+        # Простая статистика без сложных запросов
+        total_links = 0
+        active_links = 0
+        total_clicks = 0
+        total_conversions = 0
+        total_rewards = 0.0
+        conversion_rate = 0.0
+        monthly_rewards = 0.0
+        weekly_rewards = 0.0
+        daily_rewards = 0.0
+        top_products = []
+        recent_activity = []
+
+        try:
+            # Получаем реферальные ссылки пользователя
+            referral_links = ReferralLink.objects.filter(user=user)
+            total_links = referral_links.count()
+            active_links = referral_links.filter(is_active=True).count()
+        except Exception:
+            pass
+
+        try:
+            # Статистика по переходам
+            total_clicks = ReferralVisit.objects.filter(referral_link__user=user).count()
+        except Exception:
+            pass
+
+        try:
+            # Статистика по конверсиям
+            total_conversions = ReferralAttribution.objects.filter(
+                referral_link__user=user,
+                converted=True
+            ).count()
+        except Exception:
+            pass
+
+        try:
+            # Статистика по вознаграждениям
+            total_rewards = ReferralReward.objects.filter(user=user).aggregate(
+                total=Sum('amount')
+            )['total'] or 0
+            total_rewards = float(total_rewards)
+        except Exception:
+            pass
+
+        # Конверсия
+        conversion_rate = (total_conversions / total_clicks * 100) if total_clicks > 0 else 0
+
+        return Response({
+            'total_links': total_links,
+            'active_links': active_links,
             'total_clicks': total_clicks,
             'total_conversions': total_conversions,
             'total_rewards': total_rewards,
-            'conversion_rate': round(conversion_rate, 2),
-            'average_reward': round(average_reward, 2)
-        }
-        
-        serializer = ReferralStatsSerializer(stats)
-        return Response(serializer.data)
-        
+            'conversion_rate': conversion_rate,
+            'monthly_rewards': monthly_rewards,
+            'weekly_rewards': weekly_rewards,
+            'daily_rewards': daily_rewards,
+            'top_products': top_products,
+            'recent_activity': recent_activity
+        }, status=status.HTTP_200_OK)
+
     except Exception as e:
-        logger.error(f"Error getting referral stats: {e}")
+        logger.error(f'Error fetching user referral stats: {str(e)}')
         return Response(
-            {'error': 'Ошибка при получении статистики'}, 
+            {'error': f'Ошибка при загрузке статистики: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def referral_analytics(request):
+    """Детальная аналитика реферальной программы"""
+    try:
+        time_range = request.GET.get('time_range', '30d')
+
+        if time_range == '7d':
+            days = 7
+        elif time_range == '30d':
+            days = 30
+        elif time_range == '90d':
+            days = 90
+        elif time_range == '1y':
+            days = 365
+        else:
+            days = 30
+
+        start_date = timezone.now() - timedelta(days=days)
+
+        visits = ReferralVisit.objects.filter(visited_at__gte=start_date)
+        attributions = ReferralAttribution.objects.filter(created_at__gte=start_date, converted=True)
+        rewards = ReferralReward.objects.filter(created_at__gte=start_date)
+
+        total_clicks = visits.count()
+        total_conversions = attributions.count()
+        conversion_rate = (total_conversions / total_clicks * 100) if total_clicks > 0 else 0
+        total_revenue = sum([float(attr.conversion_amount or 0) for attr in attributions])
+        total_commission = sum([float(reward.amount) for reward in rewards])
+        avg_order_value = total_revenue / total_conversions if total_conversions > 0 else 0
+
+        daily_stats = []
+        for i in range(days):
+            date = start_date + timedelta(days=i)
+            day_visits = visits.filter(visited_at__date=date.date())
+            day_attributions = attributions.filter(created_at__date=date.date())
+            day_rewards = rewards.filter(created_at__date=date.date())
+
+            daily_stats.append({
+                'date': date.date().isoformat(),
+                'clicks': day_visits.count(),
+                'conversions': day_attributions.count(),
+                'revenue': sum([float(attr.conversion_amount or 0) for attr in day_attributions]),
+                'commission': sum([float(reward.amount) for reward in day_rewards])
+            })
+
+        product_stats = {}
+        for attr in attributions:
+            if attr.product:
+                if attr.product.id not in product_stats:
+                    product_stats[attr.product.id] = {
+                        'id': attr.product.id,
+                        'title': attr.product.title,
+                        'clicks': 0,
+                        'conversions': 0,
+                        'revenue': 0,
+                        'commission': 0
+                    }
+                product_stats[attr.product.id]['conversions'] += 1
+                product_stats[attr.product.id]['revenue'] += float(attr.conversion_amount or 0)
+
+        for visit in visits:
+            if visit.referral_link.product:
+                product_id = visit.referral_link.product.id
+                if product_id in product_stats:
+                    product_stats[product_id]['clicks'] += 1
+
+        for reward in rewards:
+            if reward.product and reward.product.id in product_stats:
+                product_stats[reward.product.id]['commission'] += float(reward.amount)
+
+        top_products = sorted(
+            product_stats.values(),
+            key=lambda x: x['conversions'],
+            reverse=True
+        )[:10]
+
+        for product in top_products:
+            product['conversion_rate'] = (product['conversions'] / product['clicks'] * 100) if product['clicks'] > 0 else 0
+
+        referrer_stats = {}
+        for attr in attributions:
+            if attr.referral_link.user:
+                user_id = attr.referral_link.user.id
+                if user_id not in referrer_stats:
+                    referrer_stats[user_id] = {
+                        'id': user_id,
+                        'username': attr.referral_link.user.username,
+                        'clicks': 0,
+                        'conversions': 0,
+                        'revenue': 0,
+                        'commission': 0
+                    }
+                referrer_stats[user_id]['conversions'] += 1
+                referrer_stats[user_id]['revenue'] += float(attr.conversion_amount or 0)
+
+        for visit in visits:
+            if visit.referral_link.user:
+                user_id = visit.referral_link.user.id
+                if user_id in referrer_stats:
+                    referrer_stats[user_id]['clicks'] += 1
+
+        for reward in rewards:
+            if reward.user and reward.user.id in referrer_stats:
+                referrer_stats[reward.user.id]['commission'] += float(reward.amount)
+
+        top_referrers = sorted(
+            referrer_stats.values(),
+            key=lambda x: x['conversions'],
+            reverse=True
+        )[:10]
+
+        conversion_funnel = {
+            'visitors': visits.values('anonymous_id').distinct().count(),
+            'clicks': total_clicks,
+            'conversions': total_conversions,
+            'revenue': total_revenue
+        }
+
+        return Response({
+            'overview': {
+                'total_clicks': total_clicks,
+                'total_conversions': total_conversions,
+                'conversion_rate': conversion_rate,
+                'total_revenue': total_revenue,
+                'total_commission': total_commission,
+                'avg_order_value': avg_order_value
+            },
+            'daily_stats': daily_stats,
+            'top_products': top_products,
+            'top_referrers': top_referrers,
+            'conversion_funnel': conversion_funnel
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f'Error fetching analytics: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при загрузке аналитики'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# Admin Dashboard
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_dashboard(request):
+    """Админская панель с общей статистикой"""
+    try:
+        if request.user.role != 'superadmin':
+            return Response(
+                {'error': 'Только администраторы могут просматривать панель'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        # Общая статистика
+        total_users = User.objects.count()
+        total_products = Product.objects.count()
+        total_orders = Order.objects.count()
+        total_withdrawals = WithdrawalRequest.objects.count()
+        
+        # Статистика по ролям
+        admin_count = User.objects.filter(role='superadmin').count()
+        vendor_count = User.objects.filter(role='vendor').count()
+        ops_count = User.objects.filter(role='ops').count()
+        
+        # Статистика по статусам заказов
+        pending_orders = Order.objects.filter(status='pending').count()
+        completed_orders = Order.objects.filter(status='completed').count()
+        cancelled_orders = Order.objects.filter(status='cancelled').count()
+        
+        # Статистика по выводам
+        pending_withdrawals = WithdrawalRequest.objects.filter(status='pending').count()
+        approved_withdrawals = WithdrawalRequest.objects.filter(status='approved').count()
+        rejected_withdrawals = WithdrawalRequest.objects.filter(status='rejected').count()
+
+        return Response({
+            'total_users': total_users,
+            'total_products': total_products,
+            'total_orders': total_orders,
+            'total_withdrawals': total_withdrawals,
+            'user_stats': {
+                'admins': admin_count,
+                'vendors': vendor_count,
+                'ops': ops_count
+            },
+            'order_stats': {
+                'pending': pending_orders,
+                'completed': completed_orders,
+                'cancelled': cancelled_orders
+            },
+            'withdrawal_stats': {
+                'pending': pending_withdrawals,
+                'approved': approved_withdrawals,
+                'rejected': rejected_withdrawals
+            }
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f'Error fetching admin dashboard: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при загрузке панели администратора'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# Admin User Management
+class AdminUserListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return User.objects.none()
+        return User.objects.all()
+
+
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return User.objects.none()
+        return User.objects.all()
+
+
+class AdminUserCreateView(generics.CreateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        if not self.request.user.is_staff:
+            raise permissions.PermissionDenied("Только администраторы могут создавать пользователей")
+        serializer.save()
+
+
+# Admin Product Management
+class AdminProductListView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return Product.objects.none()
+        return Product.objects.all()
+
+
+class AdminProductDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return Product.objects.none()
+        return Product.objects.all()
+
+
+# Admin Order Management
+class AdminOrderListView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return Order.objects.none()
+        return Order.objects.all()
+
+
+class AdminOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if not self.request.user.is_staff:
+            return Order.objects.none()
+        return Order.objects.all()
+
+
+# Admin Withdrawal Management
+class AdminWithdrawalListView(generics.ListAPIView):
+    serializer_class = WithdrawalRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return WithdrawalRequest.objects.none()
+        return WithdrawalRequest.objects.all()
+
+
+class AdminWithdrawalDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = WithdrawalRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'superadmin':
+            return WithdrawalRequest.objects.none()
+        return WithdrawalRequest.objects.all()
+
 
 # Admin views for managing rewards
 class AdminReferralRewardListView(generics.ListAPIView):
@@ -767,201 +909,29 @@ class AdminReferralRewardListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if not request.user.is_staff:
+        if self.request.user.role != 'superadmin':
             return ReferralReward.objects.none()
         return ReferralReward.objects.all()
+
 
 class AdminReferralRewardUpdateView(generics.UpdateAPIView):
     serializer_class = ReferralRewardUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if not request.user.is_staff:
+        if self.request.user.role != 'superadmin':
             return ReferralReward.objects.none()
         return ReferralReward.objects.all()
+
 
 class AdminReferralPayoutListView(generics.ListAPIView):
     serializer_class = ReferralPayoutSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if not request.user.is_staff:
+        if self.request.user.role != 'superadmin':
             return ReferralPayout.objects.none()
         return ReferralPayout.objects.all()
-
-# Product Management - только для админов
-class ProductListCreateView(generics.ListCreateAPIView):
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()  # Вендоры не могут видеть продукты
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return ProductCreateSerializer
-        return ProductSerializer
-
-    def perform_create(self, serializer):
-        # Только админы могут создавать продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать продукты")
-        serializer.save(vendor=self.request.user)
-
-class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()
-
-    def perform_update(self, serializer):
-        # Только админы могут обновлять продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут обновлять продукты")
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        # Только админы могут удалять продукты
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут удалять продукты")
-        instance.delete()
-
-# Category Management - только для админов
-class CategoryListCreateView(generics.ListCreateAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
-
-    def perform_create(self, serializer):
-        # Только админы могут создавать категории
-        if self.request.user.role != 'superadmin':
-            raise permissions.PermissionDenied("Только администраторы могут создавать категории")
-        serializer.save()
-
-class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
-
-# Order Management - только для админов
-class OrderListCreateView(generics.ListCreateAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Order.objects.all()
-        return Order.objects.none()
-
-class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Order.objects.all()
-        return Order.objects.none()
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def update_order_status(request, order_id):
-    """Обновляет статус заказа - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обновлять статус заказов'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    try:
-        order = Order.objects.get(id=order_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in Order.STATUS_CHOICES]:
-            return Response(
-                {'error': 'Неверный статус'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        order.status = new_status
-        order.save()
-        
-        return Response({'message': 'Статус заказа обновлен'})
-        
-    except Order.DoesNotExist:
-        return Response(
-            {'error': 'Заказ не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-
-# Withdrawal Management - только для админов
-class WithdrawalRequestListCreateView(generics.ListCreateAPIView):
-    serializer_class = WithdrawalRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
-
-class WithdrawalRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = WithdrawalRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def process_withdrawal(request, withdrawal_id):
-    """Обрабатывает запрос на вывод средств - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обрабатывать запросы на вывод'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    try:
-        withdrawal = WithdrawalRequest.objects.get(id=withdrawal_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in WithdrawalRequest.STATUS_CHOICES]:
-            return Response(
-                {'error': 'Неверный статус'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        withdrawal.status = new_status
-        withdrawal.processed_by = request.user
-        withdrawal.processed_at = timezone.now()
-        
-        if new_status == 'rejected':
-            withdrawal.rejection_reason = request.data.get('rejection_reason', '')
-        
-        withdrawal.save()
-        
-        return Response({'message': 'Запрос на вывод обработан'})
-        
-    except WithdrawalRequest.DoesNotExist:
-        return Response(
-            {'error': 'Запрос на вывод не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
 
 
 class AdminReferralPayoutUpdateView(generics.UpdateAPIView):
@@ -969,19 +939,18 @@ class AdminReferralPayoutUpdateView(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if not request.user.is_staff:
+        if self.request.user.role != 'superadmin':
             return ReferralPayout.objects.none()
         return ReferralPayout.objects.all()
 
-# Product Management - только для админов
+
+# Product Management
 class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Public access for reading
 
     def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()  # Вендоры не могут видеть продукты
+        return Product.objects.filter(is_active=True)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -989,58 +958,212 @@ class ProductListCreateView(generics.ListCreateAPIView):
         return ProductSerializer
 
     def perform_create(self, serializer):
-        # Только админы могут создавать продукты
-        if self.request.user.role != 'superadmin':
+        # Only admins can create products
+        if not self.request.user.is_authenticated or self.request.user.role != 'superadmin':
             raise permissions.PermissionDenied("Только администраторы могут создавать продукты")
         serializer.save(vendor=self.request.user)
 
+
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Public access for reading
 
     def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Product.objects.all()
-        return Product.objects.none()
+        return Product.objects.filter(is_active=True)
 
     def perform_update(self, serializer):
-        # Только админы могут обновлять продукты
         if self.request.user.role != 'superadmin':
             raise permissions.PermissionDenied("Только администраторы могут обновлять продукты")
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Только админы могут удалять продукты
         if self.request.user.role != 'superadmin':
             raise permissions.PermissionDenied("Только администраторы могут удалять продукты")
         instance.delete()
 
-# Category Management - только для админов
-class CategoryListCreateView(generics.ListCreateAPIView):
-    serializer_class = CategorySerializer
+
+# Featured Products View
+class FeaturedProductsView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True).order_by('-total_sales')[:8]
+
+
+# Reviews Views
+class ReviewListCreateView(generics.ListCreateAPIView):
+    serializer_class = ProductSerializer  # TODO: Create ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
+        # TODO: Implement Review model and return actual queryset
+        return Product.objects.none()
+
+
+class LatestReviewsView(generics.ListAPIView):
+    serializer_class = ProductSerializer  # TODO: Create ReviewSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        # TODO: Implement Review model and return actual queryset
+        return Product.objects.none()
+
+
+# Authentication Views
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def login_view(request):
+    """Логин пользователя"""
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if not username or not password:
+        return Response(
+            {'error': 'Username и password обязательны'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    from django.contrib.auth import authenticate
+    from rest_framework_simplejwt.tokens import RefreshToken
+
+    user = authenticate(username=username, password=password)
+
+    if user is None:
+        return Response(
+            {'error': 'Неверные учетные данные'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    if not user.is_active:
+        return Response(
+            {'error': 'Аккаунт деактивирован'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    refresh = RefreshToken.for_user(user)
+    access_token = str(refresh.access_token)
+
+    serializer = UserSerializer(user)
+
+    return Response({
+        'access': access_token,
+        'refresh': str(refresh),
+        'user': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def register_view(request):
+    """Регистрация нового пользователя"""
+    from django.contrib.auth import get_user_model
+    from rest_framework_simplejwt.tokens import RefreshToken
+
+    User = get_user_model()
+
+    username = request.data.get('username')
+    email = request.data.get('email')
+    password = request.data.get('password')
+    password2 = request.data.get('password2')
+    first_name = request.data.get('first_name', '')
+    last_name = request.data.get('last_name', '')
+    phone = request.data.get('phone', '')
+    referral_code = request.data.get('referral_code', '')
+
+    if not username or not email or not password:
+        return Response(
+            {'error': 'Username, email и password обязательны'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if password != password2:
+        return Response(
+            {'error': 'Пароли не совпадают'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if User.objects.filter(username=username).exists():
+        return Response(
+            {'error': 'Пользователь с таким username уже существует'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if User.objects.filter(email=email).exists():
+        return Response(
+            {'error': 'Пользователь с таким email уже существует'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            role='vendor'
+        )
+
+        if referral_code:
+            pass  # TODO: Add referral code processing logic
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        serializer = UserSerializer(user)
+
+        return Response({
+            'access': access_token,
+            'refresh': str(refresh),
+            'user': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response(
+            {'error': f'Ошибка при создании пользователя: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_profile(request):
+    """Получение профиля пользователя"""
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
+
+
+# Category Management
+class CategoryListCreateView(generics.ListCreateAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        # Только админы могут создавать категории
         if self.request.user.role != 'superadmin':
             raise permissions.PermissionDenied("Только администраторы могут создавать категории")
         serializer.save()
 
+
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return Category.objects.all()
-        return Category.objects.none()
+    def perform_update(self, serializer):
+        if self.request.user.role != 'superadmin':
+            raise permissions.PermissionDenied("Только администраторы могут обновлять категории")
+        serializer.save()
 
-# Order Management - только для админов
+    def perform_destroy(self, instance):
+        if self.request.user.role != 'superadmin':
+            raise permissions.PermissionDenied("Только администраторы могут удалять категории")
+        instance.delete()
+
+
+# Order Management
 class OrderListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -1048,7 +1171,11 @@ class OrderListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         if self.request.user.role == 'superadmin':
             return Order.objects.all()
-        return Order.objects.none()
+        return Order.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = OrderSerializer
@@ -1057,41 +1184,46 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         if self.request.user.role == 'superadmin':
             return Order.objects.all()
-        return Order.objects.none()
+        return Order.objects.filter(user=self.request.user)
+
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def update_order_status(request, order_id):
-    """Обновляет статус заказа - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обновлять статус заказов'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
+    """Обновление статуса заказа"""
     try:
-        order = Order.objects.get(id=order_id)
+        order = get_object_or_404(Order, id=order_id)
         new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in Order.STATUS_CHOICES]:
+
+        if not new_status:
             return Response(
-                {'error': 'Неверный статус'}, 
+                {'error': 'Статус обязателен'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
+        if request.user.role not in ['superadmin', 'ops']:
+            return Response(
+                {'error': 'Недостаточно прав'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         order.status = new_status
         order.save()
-        
-        return Response({'message': 'Статус заказа обновлен'})
-        
-    except Order.DoesNotExist:
+
+        return Response({
+            'success': True,
+            'message': 'Статус заказа обновлен'
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f'Error updating order status: {str(e)}')
         return Response(
-            {'error': 'Заказ не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
+            {'error': 'Ошибка при обновлении статуса заказа'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
-# Withdrawal Management - только для админов
+# Withdrawal Management
 class WithdrawalRequestListCreateView(generics.ListCreateAPIView):
     serializer_class = WithdrawalRequestSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -1099,7 +1231,11 @@ class WithdrawalRequestListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         if self.request.user.role == 'superadmin':
             return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
+        return WithdrawalRequest.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 
 class WithdrawalRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = WithdrawalRequestSerializer
@@ -1108,87 +1244,278 @@ class WithdrawalRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         if self.request.user.role == 'superadmin':
             return WithdrawalRequest.objects.all()
-        return WithdrawalRequest.objects.none()
+        return WithdrawalRequest.objects.filter(user=self.request.user)
+
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def process_withdrawal(request, withdrawal_id):
-    """Обрабатывает запрос на вывод средств - только для админов"""
-    if request.user.role != 'superadmin':
-        return Response(
-            {'error': 'Только администраторы могут обрабатывать запросы на вывод'}, 
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
+    """Обработка запроса на вывод средств"""
     try:
-        withdrawal = WithdrawalRequest.objects.get(id=withdrawal_id)
-        new_status = request.data.get('status')
-        
-        if new_status not in [choice[0] for choice in WithdrawalRequest.STATUS_CHOICES]:
+        withdrawal = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
+        action = request.data.get('action')  # 'approve' or 'reject'
+
+        if not action:
             return Response(
-                {'error': 'Неверный статус'}, 
+                {'error': 'Действие обязательно'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        withdrawal.status = new_status
-        withdrawal.processed_by = request.user
-        withdrawal.processed_at = timezone.now()
-        
-        if new_status == 'rejected':
-            withdrawal.rejection_reason = request.data.get('rejection_reason', '')
-        
-        withdrawal.save()
-        
-        return Response({'message': 'Запрос на вывод обработан'})
-        
-    except WithdrawalRequest.DoesNotExist:
+
+        if request.user.role not in ['superadmin', 'ops']:
+            return Response(
+                {'error': 'Недостаточно прав'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if action == 'approve':
+            withdrawal.status = 'approved'
+            withdrawal.processed_by = request.user
+            withdrawal.processed_at = timezone.now()
+            withdrawal.save()
+
+            return Response({
+                'success': True,
+                'message': 'Запрос на вывод одобрен'
+            }, status=status.HTTP_200_OK)
+
+        elif action == 'reject':
+            rejection_reason = request.data.get('reason', '')
+            withdrawal.status = 'rejected'
+            withdrawal.processed_by = request.user
+            withdrawal.processed_at = timezone.now()
+            withdrawal.rejection_reason = rejection_reason
+            withdrawal.save()
+
+            return Response({
+                'success': True,
+                'message': 'Запрос на вывод отклонен'
+            }, status=status.HTTP_200_OK)
+
+        else:
+            return Response(
+                {'error': 'Неверное действие'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    except Exception as e:
+        logger.error(f'Error processing withdrawal: {str(e)}')
         return Response(
-            {'error': 'Запрос на вывод не найден'}, 
-            status=status.HTTP_404_NOT_FOUND
+            {'error': 'Ошибка при обработке запроса на вывод'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 
-# User Profile Management
-@api_view(['GET', 'PUT'])
-@permission_classes([permissions.IsAuthenticated])
-def user_profile(request):
-    """Получение и обновление профиля пользователя"""
-    if request.method == 'GET':
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
-    
-    elif request.method == 'PUT':
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# Product Images Management - только для админов
+# Product Images
 class ProductImageListCreateView(generics.ListCreateAPIView):
+    queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return ProductImage.objects.all()
-        return ProductImage.objects.none()
 
     def perform_create(self, serializer):
         if self.request.user.role != 'superadmin':
-            raise PermissionDenied("Только администраторы могут создавать изображения продуктов")
+            raise permissions.PermissionDenied("Только администраторы могут загружать изображения")
         serializer.save()
 
+
 class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        if self.request.user.role == 'superadmin':
-            return ProductImage.objects.all()
-        return ProductImage.objects.none()
+    def perform_update(self, serializer):
+        if self.request.user.role != 'superadmin':
+            raise permissions.PermissionDenied("Только администраторы могут обновлять изображения")
+        serializer.save()
 
     def perform_destroy(self, instance):
         if self.request.user.role != 'superadmin':
-            raise PermissionDenied("Только администраторы могут удалять изображения продуктов")
+            raise permissions.PermissionDenied("Только администраторы могут удалять изображения")
         instance.delete()
+
+
+# Review Management
+class ReviewListCreateView(generics.ListCreateAPIView):
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.AllowAny]  # Allow public access for reading
+
+    def get_queryset(self):
+        product_id = self.request.query_params.get('product_id')
+        if product_id:
+            return Review.objects.filter(product_id=product_id).select_related('user', 'product')
+        return Review.objects.all().select_related('user', 'product')
+
+    def perform_create(self, serializer):
+        # For now, we'll create reviews without authentication
+        # In production, you might want to require authentication
+        serializer.save()
+
+
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.AllowAny]  # Allow public access for reading
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def product_reviews(request, product_id):
+    """Get reviews for a specific product"""
+    try:
+        reviews = Review.objects.filter(product_id=product_id).select_related('user', 'product')
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        logger.error(f'Error fetching product reviews: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при загрузке отзывов'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def create_review(request):
+    """Create a new review"""
+    try:
+        serializer = ReviewCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            # For now, we'll create reviews without user authentication
+            # In production, you might want to require authentication
+            review = serializer.save()
+            response_serializer = ReviewSerializer(review)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f'Error creating review: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при создании отзыва'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def create_referral_link(request):
+    """Create a new referral link"""
+    try:
+        product_id = request.data.get('product_id')
+
+        if not product_id:
+            return Response(
+                {'error': 'product_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Проверяем, существует ли продукт
+        try:
+            product = Product.objects.get(id=product_id, is_active=True)
+        except Product.DoesNotExist:
+            return Response(
+                {'error': 'Product not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Проверяем, существует ли уже реферальная ссылка для этого пользователя и продукта
+        referral_link, created = ReferralLink.objects.get_or_create(
+            user=request.user,
+            product=product,
+            defaults={'code': generate_referral_code()}
+        )
+        
+        if not created:
+            logger.info(f'Using existing referral link for user {request.user.id} and product {product_id}')
+
+        return Response({
+            'id': referral_link.id,
+            'referral_code': referral_link.code,
+            'product_title': product.title,
+            'product_price': float(product.price_uzs),
+            'created_at': referral_link.created_at
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f'Error creating referral link: {str(e)}')
+        import traceback
+        logger.error(f'Traceback: {traceback.format_exc()}')
+        return Response(
+            {'error': f'Ошибка при создании реферальной ссылки: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def track_referral_visit(request):
+    """Track a referral visit"""
+    try:
+        referral_code = request.data.get('referral_code')
+        product_id = request.data.get('product_id')
+        page_url = request.data.get('page_url')
+        user_agent = request.data.get('user_agent')
+        
+        # UTM метки
+        utm_source = request.data.get('utm_source')
+        utm_medium = request.data.get('utm_medium')
+        utm_campaign = request.data.get('utm_campaign')
+        utm_term = request.data.get('utm_term')
+        utm_content = request.data.get('utm_content')
+        first_visit = request.data.get('first_visit')
+        current_visit = request.data.get('current_visit')
+        
+        if not referral_code:
+            return Response(
+                {'error': 'referral_code is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Получаем IP адрес
+        ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+
+        # Ищем реферальную ссылку
+        try:
+            referral_link = ReferralLink.objects.get(code=referral_code)
+        except ReferralLink.DoesNotExist:
+            return Response(
+                {'error': 'Referral link not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Создаем запись о посещении с UTM метками
+        visit = ReferralVisit.objects.create(
+            referral_link=referral_link,
+            anonymous_id=f"anon_{ip_address}_{int(time.time())}",  # Временный ID для анонимного пользователя
+            ip_address=ip_address,
+            user_agent=user_agent,
+            page_url=page_url,
+            product_id=product_id,
+            utm_source=utm_source,
+            utm_medium=utm_medium,
+            utm_campaign=utm_campaign,
+            utm_term=utm_term,
+            utm_content=utm_content
+        )
+
+        # Обновляем статистику реферальной ссылки
+        referral_link.total_clicks += 1
+        referral_link.save(update_fields=['total_clicks'])
+
+        logger.info(f'Referral visit tracked: {referral_code} -> {product_id} (UTM: {utm_source}/{utm_medium}/{utm_campaign})')
+
+        return Response({
+            'success': True,
+            'visit_id': visit.id,
+            'utm_tracked': {
+                'utm_source': utm_source,
+                'utm_medium': utm_medium,
+                'utm_campaign': utm_campaign,
+                'utm_term': utm_term,
+                'utm_content': utm_content
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f'Error tracking referral visit: {str(e)}')
+        return Response(
+            {'error': 'Ошибка при отслеживании реферального перехода'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

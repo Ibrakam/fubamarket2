@@ -222,7 +222,7 @@ export default function OpsOrdersPage() {
             </select>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
-              Qo&apos;shimcha filtrlash
+              Qo'shimcha filtrlash
             </Button>
           </div>
         </CardContent>
@@ -286,7 +286,7 @@ export default function OpsOrdersPage() {
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm">
                     <Eye className="w-4 h-4 mr-2" />
-                    Tafsilotlarni ko&apos;rish
+                    Tafsilotlarni ko'rish
                   </Button>
                 </div>
                 

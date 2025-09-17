@@ -24,7 +24,7 @@ export default function CartPage() {
             <p className="text-gray-600">Savatni ko'rish uchun tizimga kirish kerak</p>
             <div className="space-y-2">
               <Link href="/login?redirect=cart">
-                <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                <Button className="w-full">
                   Kirish
                 </Button>
               </Link>
@@ -51,7 +51,7 @@ export default function CartPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Savat bo'sh</h1>
             <p className="text-gray-600 mb-8">Xarid qilishni davom ettirish uchun mahsulotlarni savatga qo'shing</p>
             <Link href="/">
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+              <Button>
                 Xarid qilishni davom ettirish
               </Button>
             </Link>

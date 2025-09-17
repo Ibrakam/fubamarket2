@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import API_ENDPOINTS from '@/lib/api-config'
 
 export interface User {
@@ -47,6 +47,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const logout = () => {
+    setUser(null)
+    setToken(null)
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+
+  const checkTokenWithServer = useCallback(async (tokenToCheck: string) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.PROFILE, {
+        headers: {
+          'Authorization': `Bearer ${tokenToCheck}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data)
+        setLoading(false)
+      } else if (response.status === 401) {
+        // Token is invalid, logout only on 401
+        logout()
+        setLoading(false)
+      } else {
+        // Server error, but keep user logged in
+        console.warn('Server error during token check:', response.status)
+        setLoading(false)
+      }
+    } catch (error) {
+      console.error('Token check failed:', error)
+      // Network error, keep user logged in but show warning
+      console.warn('Network error during token check, keeping user logged in')
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     // Check for stored token on app load
     const storedToken = localStorage.getItem('access_token') || localStorage.getItem('token')
@@ -55,10 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
+      // Verify token with server
+      checkTokenWithServer(storedToken)
+    } else {
+      setLoading(false)
     }
-    
-    setLoading(false)
-  }, [])
+  }, [checkTokenWithServer])
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -132,16 +172,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    setToken(null)
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-  }
-
   const checkToken = async (): Promise<boolean> => {
-    if (!token) return false
+    if (!token) {
+      return false
+    }
     
     try {
       const response = await fetch(API_ENDPOINTS.PROFILE, {
@@ -154,16 +188,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json()
         setUser(data)
+        localStorage.setItem('user', JSON.stringify(data))
         return true
-      } else {
-        // Token is invalid, logout
+      } else if (response.status === 401) {
+        // Token is invalid, logout only on 401
         logout()
         return false
+      } else {
+        // Server error, but keep user logged in
+        console.warn('Server error during token check:', response.status)
+        return true
       }
     } catch (error) {
       console.error('Token check failed:', error)
-      logout()
-      return false
+      // Network error, keep user logged in
+      console.warn('Network error during token check, keeping user logged in')
+      return true
     }
   }
 
