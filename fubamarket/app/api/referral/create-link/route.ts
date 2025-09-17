@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader.substring(7)
 
     // Создаем реферальную ссылку через Django API
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/referral-links/create/`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://81.162.55.70:8000'}/api/referral-links/create/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

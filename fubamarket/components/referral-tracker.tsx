@@ -32,7 +32,7 @@ export function ReferralTracker({ productId }: ReferralTrackerProps) {
       if (referralCode && utmSource === 'referral') {
         try {
           // Отправляем данные о реферальном переходе на сервер
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/referral-visits/`, {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://81.162.55.70:8000'}/api/referral-visits/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

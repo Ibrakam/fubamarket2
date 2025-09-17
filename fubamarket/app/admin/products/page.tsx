@@ -118,7 +118,7 @@ export default function AdminProductsPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/categories/`, {
+      const response = await fetch(`http://81.162.55.70:8000/api/categories/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -74,7 +74,7 @@ export default function OpsOrdersPage() {
 
   const updateOrderStatus = async (orderId: number, status: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/ops/orders/${orderId}/status`, {
+      const response = await fetch(`http://81.162.55.70:8000/api/ops/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
