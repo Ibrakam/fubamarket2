@@ -11,8 +11,8 @@ export function CartDrawer() {
   const { items, total, itemCount, updateQuantity, removeItem, proceedToCheckout } = useCart()
   const [isOpen, setIsOpen] = useState(false)
   
-  // Total is already in UZS
-  const totalInUzs = total
+  // Convert total to UZS
+  const totalInUzs = convertUsdToUzs(total)
 
   const handleCheckout = () => {
     setIsOpen(false)
@@ -54,7 +54,7 @@ export function CartDrawer() {
                   />
                   <div className="flex-1">
                     <h3 className="font-medium text-sm">{item.name}</h3>
-                    <p className="text-sm text-gray-500">{formatUzsWithSpaces(item.price)}</p>
+                    <p className="text-sm text-gray-500">{formatUzsWithSpaces(convertUsdToUzs(item.price))}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <Button
                         size="sm"
@@ -76,7 +76,7 @@ export function CartDrawer() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{formatUzsWithSpaces(item.price * item.quantity)}</p>
+                    <p className="font-medium">{formatUzsWithSpaces(convertUsdToUzs(item.price * item.quantity))}</p>
                     <Button
                       size="sm"
                       variant="ghost"
