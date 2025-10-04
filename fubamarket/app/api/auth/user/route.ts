@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const DJANGO_API_URL = 'http://81.162.55.70:8000'
+const DJANGO_API_URL = 'https://fubamarket.com'
 
 export async function GET(request: NextRequest) {
   try {

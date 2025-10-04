@@ -58,7 +58,7 @@ export default function ProductDetailPage() {
             if (firstPhoto.image.startsWith('http')) {
               productImage = firstPhoto.image
             } else {
-              productImage = `http://81.162.55.70:8000${firstPhoto.image}`
+              productImage = `https://fubamarket.com${firstPhoto.image}`
             }
           }
         }

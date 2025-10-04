@@ -1,7 +1,7 @@
 // API Configuration
 // This file centralizes all API endpoints and makes them configurable
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://81.162.55.70:8000'
+const API_BASE_URL = "https://fubamarket.com"
 
 export const API_ENDPOINTS = {
   // Auth endpoints

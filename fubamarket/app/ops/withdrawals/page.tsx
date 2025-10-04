@@ -45,7 +45,7 @@ export default function OpsWithdrawalsPage() {
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('http://81.162.55.70:8000/api/ops/withdrawals', {
+      const response = await fetch('https://fubamarket.com/api/ops/withdrawals', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -64,7 +64,7 @@ export default function OpsWithdrawalsPage() {
 
   const processWithdrawal = async (withdrawalId: number, status: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`http://81.162.55.70:8000/api/ops/withdrawals/${withdrawalId}/process`, {
+      const response = await fetch(`https://fubamarket.com/api/ops/withdrawals/${withdrawalId}/process`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

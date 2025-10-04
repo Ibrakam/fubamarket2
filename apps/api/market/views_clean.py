@@ -1179,3 +1179,7 @@ class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
 
 
+
+
+
+

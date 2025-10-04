@@ -63,7 +63,7 @@ export function EditUserModal({ isOpen, onClose, user, onUserUpdated }: EditUser
 
     setLoading(true)
     try {
-      const response = await fetch(`http://81.162.55.70:8000/api/admin/users/${user.id}`, {
+      const response = await fetch(`https://fubamarket.com/api/admin/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

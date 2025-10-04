@@ -10,7 +10,7 @@
 
 ### 2. Переменные окружения
 - **Development**: `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000`
-- **Production**: `NEXT_PUBLIC_API_URL=https://your-domain.com`
+- **Production**: `NEXT_PUBLIC_API_URL=/api`
 
 ### 3. Обновлены все компоненты
 Все файлы теперь используют `API_ENDPOINTS` вместо жестко заданных URL.
@@ -27,7 +27,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### Production
 Создайте файл `fubamarket/.env.production`:
 ```bash
-NEXT_PUBLIC_API_URL=https://your-domain.com
+NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 NODE_ENV=production
 ```
@@ -42,6 +42,10 @@ cp fubamarket/env.local.example fubamarket/.env.local
 # Или создайте вручную
 echo "NEXT_PUBLIC_API_URL=http://127.0.0.1:8000" > fubamarket/.env.local
 echo "NEXT_PUBLIC_APP_URL=http://localhost:3000" >> fubamarket/.env.local
+
+# Для production
+echo "NEXT_PUBLIC_API_URL=/api" > fubamarket/.env.production
+echo "NEXT_PUBLIC_APP_URL=https://your-domain.com" >> fubamarket/.env.production
 ```
 
 ### Для Production
@@ -129,8 +133,9 @@ grep -r "http://127.0.0.1:8000" fubamarket --include="*.tsx" --include="*.ts"
 ## 🚨 Важные моменты
 
 1. **Переменные окружения** должны начинаться с `NEXT_PUBLIC_` для доступности в браузере
-2. **Не включайте** `/api` в `NEXT_PUBLIC_API_URL` - это добавляется автоматически
-3. **Перезапустите** Next.js сервер после изменения переменных окружения
+2. **В production** используйте `/api` как базовый путь (относительный URL)
+3. **В development** используйте полный URL с портом (например, `http://127.0.0.1:8000`)
+4. **Перезапустите** Next.js сервер после изменения переменных окружения
 4. **Проверьте** CORS настройки в Django для production домена
 
 ## 🔧 Troubleshooting
