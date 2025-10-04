@@ -860,6 +860,32 @@ class AdminProductDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Product.objects.none()
         return Product.objects.all()
 
+    def update(self, request, *args, **kwargs):
+        try:
+            # Логируем входящие данные для отладки
+            print(f"AdminProductDetailView update - Request data: {request.data}")
+            print(f"AdminProductDetailView update - User: {request.user}")
+            print(f"AdminProductDetailView update - User role: {request.user.role}")
+            
+            # Получаем объект
+            instance = self.get_object()
+            print(f"AdminProductDetailView update - Instance: {instance}")
+            
+            # Создаем сериализатор
+            serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+            
+            if serializer.is_valid():
+                print("AdminProductDetailView update - Serializer is valid")
+                self.perform_update(serializer)
+                return Response(serializer.data)
+            else:
+                print(f"AdminProductDetailView update - Serializer errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"AdminProductDetailView update - Exception: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # Admin Order Management
 class AdminOrderListView(generics.ListAPIView):

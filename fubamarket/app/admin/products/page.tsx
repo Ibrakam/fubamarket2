@@ -118,7 +118,7 @@ export default function AdminProductsPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`https://fubamarket.com/api/categories/`, {
+      const response = await fetch(`https://fubamarket.com//api/categories/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -180,19 +180,28 @@ export default function AdminProductsPage() {
     if (!editingProduct) return
 
     try {
+      const requestData = {
+        title: formData.title,
+        description: formData.description,
+        price_uzs: parseInt(formData.price_uzs),
+        category: formData.category ? parseInt(formData.category) : null,
+        stock: parseInt(formData.stock),
+        is_active: formData.is_active,
+        referral_commission: parseFloat(formData.referral_commission) || 0,
+        referral_enabled: formData.referral_enabled,
+        booked_quantity: 0  // Добавляем booked_quantity с значением по умолчанию
+      }
+      
+      console.log('Sending update request with data:', requestData)
+      console.log('Form data:', formData)
+      
       const response = await fetch(`${API_ENDPOINTS.ADMIN_PRODUCT_BY_ID(editingProduct.id.toString())}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          price_uzs: parseInt(formData.price_uzs),
-          category: formData.category ? parseInt(formData.category) : null,
-          stock: parseInt(formData.stock),
-          referral_commission: parseFloat(formData.referral_commission) || 0
-        }),
+        body: JSON.stringify(requestData),
       })
 
       if (response.ok) {
@@ -217,7 +226,9 @@ export default function AdminProductsPage() {
         toast.success('Продукт обновлен успешно!')
       } else {
         const error = await response.json()
-        toast.error(error.detail || 'Ошибка при обновлении продукта')
+        console.error('Update product error:', error)
+        console.error('Response status:', response.status)
+        toast.error(error.detail || error.message || 'Ошибка при обновлении продукта')
       }
     } catch (error) {
       toast.error('Ошибка при обновлении продукта')

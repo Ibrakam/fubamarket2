@@ -276,6 +276,7 @@ class ProductSerializer(serializers.ModelSerializer):
     vendor_username = serializers.CharField(source='vendor.username', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
     photos = ProductImageSerializer(many=True, read_only=True)
+    slug = serializers.SlugField(required=False, allow_blank=True)
 
     class Meta:
         model = Product
@@ -287,8 +288,44 @@ class ProductSerializer(serializers.ModelSerializer):
             'total_referral_sales', 'sales_percentage', 'booked_quantity',
             'stock'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'total_sales',
+        read_only_fields = ['id', 'vendor', 'created_at', 'updated_at', 'total_sales',
                            'total_referral_sales', 'sales_percentage']
+
+    def create(self, validated_data):
+        # Generate slug from title if not provided or empty
+        if not validated_data.get('slug'):
+            from django.utils.text import slugify
+            validated_data['slug'] = self._generate_unique_slug(validated_data['title'])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Generate slug from title if title is being updated and slug is not provided or empty
+        if 'title' in validated_data and (not validated_data.get('slug')):
+            from django.utils.text import slugify
+            validated_data['slug'] = self._generate_unique_slug(validated_data['title'], instance.id)
+        return super().update(instance, validated_data)
+
+    def _generate_unique_slug(self, title, exclude_id=None):
+        """Generate a unique slug from title"""
+        from django.utils.text import slugify
+        from .models import Product
+        
+        base_slug = slugify(title)
+        slug = base_slug
+        counter = 1
+        
+        while True:
+            queryset = Product.objects.filter(slug=slug)
+            if exclude_id:
+                queryset = queryset.exclude(id=exclude_id)
+            
+            if not queryset.exists():
+                break
+                
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+            
+        return slug
 
 
 

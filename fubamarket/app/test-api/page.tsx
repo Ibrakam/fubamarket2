@@ -11,7 +11,7 @@ export default function TestApiPage() {
     const testApi = async () => {
       try {
         console.log('Testing API...')
-        const response = await fetch('https://fubamarket.com/api/products/9/')
+        const response = await fetch('https://fubamarket.com//api/products/9/')
         console.log('Response status:', response.status)
         
         if (response.ok) {

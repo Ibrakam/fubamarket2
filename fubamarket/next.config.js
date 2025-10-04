@@ -10,7 +10,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://fubamarket.com/api/:path*',
+        destination: 'https://fubamarket.com//api/:path*',
       },
     ]
   },
