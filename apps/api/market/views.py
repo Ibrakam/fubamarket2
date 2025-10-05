@@ -18,7 +18,7 @@ from .serializers import (
     ReferralRewardSerializer, ReferralRewardUpdateSerializer, ReferralPayoutSerializer,
     ReferralPayoutCreateSerializer, ReferralBalanceSerializer, ReferralLinkStatsSerializer,
     ProductSerializer, ProductCreateSerializer, CategorySerializer, OrderSerializer,
-    WithdrawalRequestSerializer, UserSerializer, ProductImageSerializer, ReviewSerializer, ReviewCreateSerializer
+    WithdrawalRequestSerializer, UserSerializer, ProductImageSerializer, ProductImageCreateSerializer, ReviewSerializer, ReviewCreateSerializer
 )
 from .referral_utils import generate_referral_code
 
@@ -1015,25 +1015,76 @@ class FeaturedProductsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Product.objects.filter(is_active=True).order_by('-total_sales')[:8]
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+
+# API endpoint для добавления дефолтных фотографий
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def add_default_photos(request):
+    """Добавляет дефолтные фотографии к продуктам без фотографий"""
+    if request.user.role != 'superadmin':
+        return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        # Получаем продукты без фотографий
+        products_without_photos = Product.objects.filter(is_active=True).exclude(
+            id__in=ProductImage.objects.values_list('product_id', flat=True)
+        )
+        
+        added_count = 0
+        
+        # Дефолтные изображения по категориям
+        default_images = {
+            'Electronics': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop',
+            'Clothing': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop',
+            'Books': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop',
+            'Home & Garden': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop',
+        }
+        
+        for product in products_without_photos:
+            # Определяем категорию
+            category_name = product.category.name if product.category else 'Electronics'
+            default_image_url = default_images.get(category_name, default_images['Electronics'])
+            
+            # Создаем ProductImage с URL
+            photo = ProductImage.objects.create(
+                product=product,
+                alt=f"Default photo for {product.title}",
+                sort_order=0,
+                image=default_image_url
+            )
+            
+            added_count += 1
+        
+        return Response({
+            'message': f'Added {added_count} default photos to products',
+            'added_count': added_count
+        })
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Reviews Views
 class ReviewListCreateView(generics.ListCreateAPIView):
-    serializer_class = ProductSerializer  # TODO: Create ReviewSerializer
+    serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # TODO: Implement Review model and return actual queryset
-        return Product.objects.none()
+        return Review.objects.all()
 
 
 class LatestReviewsView(generics.ListAPIView):
-    serializer_class = ProductSerializer  # TODO: Create ReviewSerializer
+    serializer_class = ReviewSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        # TODO: Implement Review model and return actual queryset
-        return Product.objects.none()
+        return Review.objects.all().order_by('-created_at')[:10]
 
 
 # Authentication Views
@@ -1334,12 +1385,30 @@ def process_withdrawal(request, withdrawal_id):
 # Product Images
 class ProductImageListCreateView(generics.ListCreateAPIView):
     queryset = ProductImage.objects.all()
-    serializer_class = ProductImageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return ProductImageCreateSerializer
+        return ProductImageSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            print(f"ProductImageListCreateView create - Request data: {request.data}")
+            print(f"ProductImageListCreateView create - Files: {request.FILES}")
+            print(f"ProductImageListCreateView create - User: {request.user}")
+            print(f"ProductImageListCreateView create - User role: {request.user.role}")
+            
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print(f"ProductImageListCreateView create - Exception: {str(e)}")
+            raise e
 
     def perform_create(self, serializer):
         if self.request.user.role != 'superadmin':
             raise permissions.PermissionDenied("Только администраторы могут загружать изображения")
+        print(f"ProductImageListCreateView perform_create - Saving with data: {serializer.validated_data}")
+        print(f"ProductImageListCreateView perform_create - Files in request: {self.request.FILES}")
         serializer.save()
 
 
@@ -1347,6 +1416,18 @@ class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            print(f"ProductImageDetailView destroy - Request: {request}")
+            print(f"ProductImageDetailView destroy - User: {request.user}")
+            print(f"ProductImageDetailView destroy - User role: {request.user.role}")
+            print(f"ProductImageDetailView destroy - PK: {kwargs.get('pk')}")
+            
+            return super().destroy(request, *args, **kwargs)
+        except Exception as e:
+            print(f"ProductImageDetailView destroy - Exception: {str(e)}")
+            raise e
 
     def perform_update(self, serializer):
         if self.request.user.role != 'superadmin':
@@ -1356,6 +1437,7 @@ class ProductImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_destroy(self, instance):
         if self.request.user.role != 'superadmin':
             raise permissions.PermissionDenied("Только администраторы могут удалять изображения")
+        print(f"ProductImageDetailView perform_destroy - Deleting instance: {instance}")
         instance.delete()
 
 

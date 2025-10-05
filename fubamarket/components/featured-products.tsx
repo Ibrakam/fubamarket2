@@ -1,10 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { getProductImage } from "@/lib/product-images"
 import { ProductCard } from "@/components/product-card"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import API_ENDPOINTS from "@/lib/api-config"
 
 interface Product {
@@ -27,15 +25,25 @@ export function FeaturedProducts() {
         const response = await fetch(API_ENDPOINTS.FEATURED_PRODUCTS)
         if (response.ok) {
           const data = await response.json()
+          
           // Преобразуем данные API в формат Product
-          const formattedProducts = data.map((product: any) => {
+          const formattedProducts = data.map((product: {
+            id: number
+            title: string
+            price_uzs: string
+            category_name?: string
+            is_active: boolean
+            photos: Array<{id: number, image: string, alt: string}>
+            referral_commission?: number
+            referral_enabled?: boolean
+          }) => {
             // Используем реальные фотографии продукта, если они есть
             let productImage = ""
             if (product.photos && Array.isArray(product.photos) && product.photos.length > 0) {
               // Если есть фотографии, используем первую
               const firstPhoto = product.photos[0]
-              if (firstPhoto.url) {
-                productImage = firstPhoto.url
+              if (firstPhoto.image) {
+                productImage = firstPhoto.image
               }
             }
             
@@ -46,10 +54,10 @@ export function FeaturedProducts() {
             
             return {
               id: String(product.id),
-              name: product.title || product.name || "Untitled Product",
+              name: product.title || "Untitled Product",
               price: (Number(product.price_uzs) || 0) / 100,
               image: productImage,
-              category: product.category || "",
+              category: product.category_name || "",
               rating: 5,
               inStock: product.is_active || true,
               photos: product.photos || [] // Store photos data
@@ -68,6 +76,8 @@ export function FeaturedProducts() {
 
     fetchFeaturedProducts()
   }, [])
+
+  const memoizedProducts = useMemo(() => products, [products])
 
   if (loading) {
     return (
@@ -88,7 +98,7 @@ export function FeaturedProducts() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {products.map((product) => (
+      {memoizedProducts.map((product) => (
         <ProductCard
           key={product.id}
           product={product}

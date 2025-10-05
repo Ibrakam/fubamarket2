@@ -17,6 +17,7 @@ export interface Product {
   photos?: Array<{
     id: number
     image?: string
+    image_url?: string
     url?: string
   }>
   // Реферальная система поля

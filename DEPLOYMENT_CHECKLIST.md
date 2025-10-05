@@ -10,7 +10,7 @@
 ./final_url_update.sh
 
 # Проверьте, что все URL обновлены
-grep -r "https://fubamarket.com" fubamarket --include="*.tsx" --include="*.ts"
+grep -r "http://127.0.0.1:8000" fubamarket --include="*.tsx" --include="*.ts"
 # Должно вернуть 0 результатов
 ```
 

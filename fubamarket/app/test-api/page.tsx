@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react'
 export default function TestApiPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const testApi = async () => {
       try {
         console.log('Testing API...')
-        const response = await fetch('https://fubamarket.com//api/products/9/')
+        const response = await fetch('http://127.0.0.1:8000//api/products/9/')
         console.log('Response status:', response.status)
         
         if (response.ok) {
@@ -23,7 +23,7 @@ export default function TestApiPage() {
         }
       } catch (err) {
         console.error('API Error:', err)
-        setError(err.message)
+        setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
         setLoading(false)
       }
@@ -102,7 +102,7 @@ export default function TestApiPage() {
                   alert(`Error: ${error.error}`)
                 }
               } catch (err) {
-                alert(`Error: ${err.message}`)
+                alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
               }
             }}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"

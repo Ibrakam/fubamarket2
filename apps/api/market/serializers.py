@@ -265,10 +265,33 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 
-class ProductImageSerializer(serializers.ModelSerializer):
+class ProductImageCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ['id', 'image', 'alt', 'sort_order', 'created_at']
+        fields = ['id', 'product', 'image', 'alt', 'sort_order', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'product', 'image', 'image_url', 'alt', 'sort_order', 'created_at']
+        read_only_fields = ['id', 'created_at']
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            # Если это уже полный URL (например, из Unsplash), возвращаем как есть
+            if str(obj.image).startswith('http'):
+                return str(obj.image)
+            
+            # Если это файл в медиа, строим полный URL
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 

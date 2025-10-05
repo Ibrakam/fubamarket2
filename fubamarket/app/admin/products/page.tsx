@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Shield, Link as LinkIcon } from "lucide-react"
+import { ArrowLeft, Plus, Edit, Trash2, Shield, Link as LinkIcon } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/auth-context"
@@ -78,25 +79,7 @@ export default function AdminProductsPage() {
   }>>([])
   const [photosToDelete, setPhotosToDelete] = useState<number[]>([])
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.push('/login')
-        return
-      }
-      
-      if (user.role !== 'superadmin') {
-        router.push('/')
-        return
-      }
-      
-      fetchProducts()
-      fetchCategories()
-      setLoading(false)
-    }
-  }, [user, authLoading, router])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const response = await fetch(API_ENDPOINTS.ADMIN_PRODUCTS, {
         headers: {
@@ -114,11 +97,11 @@ export default function AdminProductsPage() {
       console.error('Error fetching products:', error)
       toast.error('Ошибка при загрузке продуктов')
     }
-  }
+  }, [token])
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch(`https://fubamarket.com//api/categories/`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/categories/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -131,7 +114,25 @@ export default function AdminProductsPage() {
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+      
+      if (user.role !== 'superadmin') {
+        router.push('/')
+        return
+      }
+      
+      fetchProducts()
+      fetchCategories()
+      setLoading(false)
+    }
+  }, [user, authLoading, router, fetchProducts, fetchCategories])
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -169,7 +170,7 @@ export default function AdminProductsPage() {
         const error = await response.json()
         toast.error(error.detail || 'Ошибка при создании продукта')
       }
-    } catch (error) {
+    } catch {
       toast.error('Ошибка при создании продукта')
     }
   }
@@ -205,7 +206,7 @@ export default function AdminProductsPage() {
       })
 
       if (response.ok) {
-        const updatedProduct = await response.json()
+        await response.json() // Получаем ответ, но не используем данные
         
         // Удаляем фотографии
         if (photosToDelete.length > 0) {
@@ -217,7 +218,9 @@ export default function AdminProductsPage() {
           await uploadPhotos(editingProduct.id)
         }
         
-        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p))
+        // Перезагружаем данные продукта для получения обновленных фотографий
+        await fetchProducts()
+        
         setEditingProduct(null)
         resetForm()
         setPhotos([])
@@ -230,7 +233,7 @@ export default function AdminProductsPage() {
         console.error('Response status:', response.status)
         toast.error(error.detail || error.message || 'Ошибка при обновлении продукта')
       }
-    } catch (error) {
+    } catch {
       toast.error('Ошибка при обновлении продукта')
     }
   }
@@ -253,7 +256,7 @@ export default function AdminProductsPage() {
       } else {
         toast.error('Ошибка при удалении продукта')
       }
-    } catch (error) {
+    } catch {
       toast.error('Ошибка при удалении продукта')
     }
   }
@@ -276,6 +279,9 @@ export default function AdminProductsPage() {
   }
 
   const startEdit = (product: Product) => {
+    console.log('Starting edit for product:', product)
+    console.log('Product photos:', product.photos)
+    
     setEditingProduct(product)
     setFormData({
       title: product.title,
@@ -290,7 +296,9 @@ export default function AdminProductsPage() {
     })
     
     // Загружаем существующие фотографии
-    setExistingPhotos(product.photos || [])
+    const existingPhotos = product.photos || []
+    console.log('Setting existing photos:', existingPhotos)
+    setExistingPhotos(existingPhotos)
     setPhotos([])
     setPhotosToDelete([])
     
@@ -341,14 +349,17 @@ export default function AdminProductsPage() {
   }
 
   const uploadPhotos = async (productId: number) => {
-    for (let i = 0; i < photos.length; i++) {
+    console.log(`Starting upload of ${photos.length} photos for product ${productId}`)
+    
+    const uploadPromises = photos.map(async (photo, i) => {
       const formData = new FormData()
       formData.append('product', productId.toString())
-      formData.append('image', photos[i])
+      formData.append('image', photo)
       formData.append('sort_order', i.toString())
 
       try {
-        const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/product-images/`, {
+        console.log(`Uploading photo ${i + 1}/${photos.length}`)
+        const response = await fetch(API_ENDPOINTS.PRODUCT_IMAGES, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -357,18 +368,32 @@ export default function AdminProductsPage() {
         })
 
         if (!response.ok) {
-          console.error('Error uploading photo:', response.statusText)
+          const errorText = await response.text()
+          console.error('Error uploading photo:', response.status, errorText)
+          return false
         }
+        
+        const result = await response.json()
+        console.log('Photo uploaded successfully:', result)
+        return true
       } catch (error) {
         console.error('Error uploading photo:', error)
+        return false
       }
-    }
+    })
+
+    const results = await Promise.all(uploadPromises)
+    const successCount = results.filter(Boolean).length
+    console.log(`Successfully uploaded ${successCount}/${photos.length} photos`)
   }
 
   const deletePhotos = async () => {
-    for (const photoId of photosToDelete) {
+    console.log(`Starting deletion of ${photosToDelete.length} photos`)
+    
+    const deletePromises = photosToDelete.map(async (photoId) => {
       try {
-        const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/product-images/${photoId}/`, {
+        console.log(`Deleting photo ${photoId}`)
+        const response = await fetch(API_ENDPOINTS.PRODUCT_IMAGE_BY_ID(photoId.toString()), {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -376,12 +401,22 @@ export default function AdminProductsPage() {
         })
 
         if (!response.ok) {
-          console.error('Error deleting photo:', response.statusText)
+          const errorText = await response.text()
+          console.error('Error deleting photo:', response.status, errorText)
+          return false
         }
+        
+        console.log(`Photo ${photoId} deleted successfully`)
+        return true
       } catch (error) {
         console.error('Error deleting photo:', error)
+        return false
       }
-    }
+    })
+
+    const results = await Promise.all(deletePromises)
+    const successCount = results.filter(Boolean).length
+    console.log(`Successfully deleted ${successCount}/${photosToDelete.length} photos`)
   }
 
   if (loading) {
@@ -573,11 +608,19 @@ export default function AdminProductsPage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {existingPhotos.map((photo) => (
                           <div key={photo.id} className="relative">
-                            <img
-                              src={photo.image}
-                              alt={photo.alt}
-                              className="w-full h-24 object-cover rounded-lg border"
-                            />
+                            {photo.image ? (
+                              <Image
+                                src={photo.image}
+                                alt={photo.alt || 'Product photo'}
+                                width={96}
+                                height={96}
+                                className="w-full h-24 object-cover rounded-lg border"
+                              />
+                            ) : (
+                              <div className="w-full h-24 bg-gray-200 rounded-lg border flex items-center justify-center">
+                                <span className="text-gray-500 text-xs">No image</span>
+                              </div>
+                            )}
                             <button
                               type="button"
                               onClick={() => removeExistingPhoto(photo.id)}
@@ -596,22 +639,33 @@ export default function AdminProductsPage() {
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 mb-2">Новые фотографии:</p>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {photos.map((photo, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={URL.createObjectURL(photo)}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-24 object-cover rounded-lg border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removePhoto(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
+                        {photos.map((photo, index) => {
+                          const imageUrl = URL.createObjectURL(photo)
+                          return (
+                            <div key={index} className="relative">
+                              {imageUrl ? (
+                                <Image
+                                  src={imageUrl}
+                                  alt={`Preview ${index + 1}`}
+                                  width={96}
+                                  height={96}
+                                  className="w-full h-24 object-cover rounded-lg border"
+                                />
+                              ) : (
+                                <div className="w-full h-24 bg-gray-200 rounded-lg border flex items-center justify-center">
+                                  <span className="text-gray-500 text-xs">Invalid file</span>
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removePhoto(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   )}

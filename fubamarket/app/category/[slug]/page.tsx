@@ -5,6 +5,8 @@ import { products, categories } from "@/data/products"
 import { ProductCard } from "@/components/product-card"
 import { ProductFilters } from "@/components/product-filters"
 import { useProductFilters } from "@/hooks/use-product-filters"
+import { useState } from "react"
+import type { Product } from "@/contexts/cart-context"
 
 interface CategoryPageProps {
   params: {
@@ -21,6 +23,29 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
   const categoryProducts =
     params.slug === "all" ? products : products.filter((product) => product.category === category.name.toUpperCase())
+  
+  const { filteredProducts } = useProductFilters()
+  const [filters, setFilters] = useState({
+    category: '',
+    priceRange: [0, 1000] as [number, number],
+    rating: 0,
+    inStock: false,
+    sortBy: 'name'
+  })
+
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters)
+  }
+
+  const handleClearFilters = () => {
+    setFilters({
+      category: '',
+      priceRange: [0, 1000],
+      rating: 0,
+      inStock: false,
+      sortBy: 'name'
+    })
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -39,7 +64,12 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
-            <ProductFilters products={categoryProducts} />
+            <ProductFilters 
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onClearFilters={handleClearFilters}
+              resultCount={filteredProducts.length}
+            />
           </div>
 
           {/* Products Grid */}
@@ -52,20 +82,22 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   )
 }
 
-function CategoryProductGrid({ products }: { products: typeof products }) {
-  const { filteredProducts, sortBy, setSortBy, currentPage, setCurrentPage, totalPages, productsPerPage } =
-    useProductFilters(products)
+function CategoryProductGrid({ products }: { products: Product[] }) {
+  const [sortBy, setSortBy] = useState('name')
+  const [currentPage, setCurrentPage] = useState(1)
+  const productsPerPage = 12
+  const totalPages = Math.ceil(products.length / productsPerPage)
 
   const startIndex = (currentPage - 1) * productsPerPage
   const endIndex = startIndex + productsPerPage
-  const currentProducts = filteredProducts.slice(startIndex, endIndex)
+  const currentProducts = products.slice(startIndex, endIndex)
 
   return (
     <div>
       {/* Sort Controls */}
       <div className="flex justify-between items-center mb-6">
         <p className="text-gray-600">
-          {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} dan {filteredProducts.length} ta mahsulot ko'rsatilmoqda
+          {startIndex + 1}-{Math.min(endIndex, products.length)} dan {products.length} ta mahsulot ko'rsatilmoqda
         </p>
         <select
           value={sortBy}

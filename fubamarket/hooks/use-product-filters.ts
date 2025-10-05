@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import type { Product } from "@/contexts/cart-context"
 import { getProductImage } from "@/lib/product-images"
+import { getFirstProductPhoto } from "@/lib/product-photos"
 import API_ENDPOINTS from "@/lib/api-config"
 
 export function useProductFilters() {
@@ -10,10 +11,10 @@ export function useProductFilters() {
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   
-  const handleSetSearchQuery = (query: string) => {
+  const handleSetSearchQuery = useCallback((query: string) => {
     console.log("Setting search query in hook:", query)
     setSearchQuery(query)
-  }
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -22,15 +23,15 @@ export function useProductFilters() {
         const res = await fetch(API_ENDPOINTS.PRODUCTS)
         const data = await res.json()
         const mapped: Product[] = (data || []).map((p: Record<string, unknown>) => {
-          // Используем реальные фотографии продукта, если они есть
-          let productImage = ""
-          if (p.photos && Array.isArray(p.photos) && p.photos.length > 0) {
-            // Если есть фотографии, используем первую
-            const firstPhoto = p.photos[0] as any
-            if (firstPhoto.url) {
-              productImage = firstPhoto.url
-            }
-          }
+                 // Используем реальные фотографии продукта, если они есть
+                 let productImage = ""
+                 if (p.photos && Array.isArray(p.photos) && p.photos.length > 0) {
+                   // Используем утилиту для получения первой фотографии
+                   const firstPhoto = getFirstProductPhoto(p.photos)
+                   if (firstPhoto) {
+                     productImage = firstPhoto
+                   }
+                 }
           
           // Если нет реальных фотографий, используем дефолтную функцию
           if (!productImage) {

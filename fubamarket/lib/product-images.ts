@@ -3,14 +3,20 @@ export function getProductImage(product: any): string {
   // Если у продукта есть фотографии из базы данных, используем первую
   if (product.photos && product.photos.length > 0) {
     const firstPhoto = product.photos[0]
-    // Проверяем, что это полный URL или относительный путь
+    
+    // Сначала проверяем image_url
+    if (firstPhoto.image_url) {
+      return firstPhoto.image_url
+    }
+    
+    // Затем проверяем image
     if (firstPhoto.image) {
       // Если это полный URL, возвращаем как есть
       if (firstPhoto.image.startsWith('http')) {
         return firstPhoto.image
       }
       // Если это относительный путь, добавляем базовый URL API
-      return `https://fubamarket.com/${firstPhoto.image}`
+      return `http://127.0.0.1:8000/${firstPhoto.image}`
     }
   }
 

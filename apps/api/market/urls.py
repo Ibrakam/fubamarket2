@@ -81,6 +81,9 @@ urlpatterns = [
     path('products/<int:product_id>/reviews/', views.product_reviews, name='product-reviews'),
     path('reviews/create/', views.create_review, name='create-review'),
     
+    # Utility endpoints
+    path('add-default-photos/', views.add_default_photos, name='add-default-photos'),
+    
     # Referral Links
     path('referral-links/create/', views.create_referral_link, name='create-referral-link'),
     path('referral-visits/', views.track_referral_visit, name='track-referral-visit'),

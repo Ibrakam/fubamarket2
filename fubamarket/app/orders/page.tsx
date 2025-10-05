@@ -41,7 +41,7 @@ export default function OrdersPage() {
       
       try {
         const token = localStorage.getItem('access_token')
-        const response = await fetch('https://fubamarket.com//api/vendor/orders', {
+        const response = await fetch('http://127.0.0.1:8000//api/vendor/orders', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

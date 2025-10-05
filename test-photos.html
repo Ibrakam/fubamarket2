@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Product Photos</title>
+</head>
+<body>
+    <h1>Test Product Photos</h1>
+    <div id="products"></div>
+
+    <script>
+        // Test data from API
+        const testProducts = [
+            {
+                id: 12,
+                title: "лоло",
+                photos: [
+                    {
+                        id: 13,
+                        product: 12,
+                        image: null,
+                        image_url: null,
+                        alt: "",
+                        sort_order: 0,
+                        created_at: "2025-10-05T00:55:44.216716+05:00"
+                    }
+                ]
+            },
+            {
+                id: 11,
+                title: "Test Product",
+                photos: [
+                    {
+                        id: 3,
+                        product: 11,
+                        image: "http://127.0.0.1:8000/media/https%3A/images.unsplash.com/photo-1441986300917-64674bd600d8%3Fw%3D400%26h%3D400%26fit%3Dcrop",
+                        image_url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
+                        alt: "Default photo for Test Product",
+                        sort_order: 0,
+                        created_at: "2025-10-05T00:30:06.989687+05:00"
+                    }
+                ]
+            }
+        ];
+
+        // Simulate the getFirstProductPhoto function
+        function getFirstProductPhoto(photos) {
+            if (!photos || !Array.isArray(photos) || photos.length === 0) return null;
+            
+            const firstPhoto = photos[0];
+            
+            // If image_url is available, use it
+            if (firstPhoto.image_url) {
+                return firstPhoto.image_url;
+            }
+            
+            // If image field has a value, use it
+            if (firstPhoto.image) {
+                if (firstPhoto.image.startsWith('http')) {
+                    return firstPhoto.image;
+                } else {
+                    return `http://127.0.0.1:8000/${firstPhoto.image}`;
+                }
+            }
+            
+            // If both image and image_url are null, return null
+            return null;
+        }
+
+        // Simulate the getProductImage function
+        function getProductImage(product) {
+            // If product has photos from database, use the first one
+            if (product.photos && product.photos.length > 0) {
+                const firstPhoto = product.photos[0];
+                
+                // First check image_url
+                if (firstPhoto.image_url) {
+                    return firstPhoto.image_url;
+                }
+                
+                // Then check image
+                if (firstPhoto.image) {
+                    // If it's a full URL, return as is
+                    if (firstPhoto.image.startsWith('http')) {
+                        return firstPhoto.image;
+                    }
+                    // If it's a relative path, add API base URL
+                    return `http://127.0.0.1:8000/${firstPhoto.image}`;
+                }
+            }
+
+            // If no photos from DB, use default images by category
+            const defaultImages = {
+                'electronics': "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
+                'clothing': "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
+                'shoes': "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
+                'books': "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop",
+                'home': "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=400&fit=crop",
+                'sports': "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+                'beauty': "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop",
+                'toys': "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+            };
+
+            // Try to determine category by product name
+            const productName = product.title?.toLowerCase() || '';
+            const categoryName = product.category_name?.toLowerCase() || '';
+            
+            // Check by keywords in name
+            if (productName.includes('phone') || productName.includes('iphone') || productName.includes('samsung') || productName.includes('galaxy')) {
+                return defaultImages.electronics;
+            }
+            if (productName.includes('shirt') || productName.includes('dress') || productName.includes('clothing') || productName.includes('t-shirt')) {
+                return defaultImages.clothing;
+            }
+            if (productName.includes('shoe') || productName.includes('nike') || productName.includes('adidas') || productName.includes('sneaker')) {
+                return defaultImages.shoes;
+            }
+            if (productName.includes('book') || productName.includes('programming') || productName.includes('python')) {
+                return defaultImages.books;
+            }
+            if (productName.includes('plant') || productName.includes('pot') || productName.includes('garden')) {
+                return defaultImages.home;
+            }
+            if (productName.includes('headphone') || productName.includes('speaker') || productName.includes('audio')) {
+                return defaultImages.sports;
+            }
+
+            // Check by category from DB
+            if (categoryName && defaultImages[categoryName]) {
+                return defaultImages[categoryName];
+            }
+
+            // If nothing matches, use general default image
+            return "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop";
+        }
+
+        // Test the logic
+        function testProductPhotos() {
+            const container = document.getElementById('products');
+            
+            testProducts.forEach(product => {
+                const div = document.createElement('div');
+                div.style.margin = '20px';
+                div.style.border = '1px solid #ccc';
+                div.style.padding = '10px';
+                
+                // Test the logic
+                let productImage = "";
+                if (product.photos && Array.isArray(product.photos) && product.photos.length > 0) {
+                    const firstPhoto = getFirstProductPhoto(product.photos);
+                    if (firstPhoto) {
+                        productImage = firstPhoto;
+                    }
+                }
+                
+                // If no real photos, use default function
+                if (!productImage) {
+                    productImage = getProductImage(product);
+                }
+                
+                div.innerHTML = `
+                    <h3>${product.title} (ID: ${product.id})</h3>
+                    <p>Has photos: ${product.photos && product.photos.length > 0}</p>
+                    <p>First photo image: ${product.photos[0]?.image || 'null'}</p>
+                    <p>First photo image_url: ${product.photos[0]?.image_url || 'null'}</p>
+                    <p>Final image URL: ${productImage}</p>
+                    <img src="${productImage}" alt="${product.title}" style="max-width: 200px; max-height: 200px;">
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Run the test when page loads
+        window.onload = testProductPhotos;
+    </script>
+</body>
+</html>

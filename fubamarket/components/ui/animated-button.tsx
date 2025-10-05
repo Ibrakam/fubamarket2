@@ -1,12 +1,13 @@
 "use client"
 
-import { Button, ButtonProps } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { forwardRef } from "react"
+import { VariantProps } from "class-variance-authority"
 
-interface AnimatedButtonProps extends ButtonProps {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-  size?: "default" | "sm" | "lg" | "icon"
+interface AnimatedButtonProps extends 
+  React.ComponentProps<"button">,
+  VariantProps<typeof import("@/components/ui/button").buttonVariants> {
   animation?: "scale" | "bounce" | "pulse" | "glow" | "wiggle"
   mobileOptimized?: boolean
 }

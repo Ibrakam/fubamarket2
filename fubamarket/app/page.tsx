@@ -9,10 +9,11 @@ import { ReferralDebug } from "@/components/referral-debug"
 import { Search, Truck, Shield, RotateCcw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export default function HomePage() {
-  const { filteredProducts: apiProducts, loading, searchQuery } = useProductFilters()
+  const { filteredProducts: apiProducts, loading, searchQuery, setSearchQuery } = useProductFilters()
+  const [localSearchQuery, setLocalSearchQuery] = useState("")
 
   // Qidiruvni tozalashda sahifaning boshiga o'tish
   useEffect(() => {
@@ -20,6 +21,28 @@ export default function HomePage() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [searchQuery])
+
+  // Debounced search function
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (localSearchQuery !== searchQuery) {
+        setSearchQuery(localSearchQuery)
+      }
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [localSearchQuery, searchQuery, setSearchQuery])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setSearchQuery(localSearchQuery)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setSearchQuery(localSearchQuery)
+    }
+  }
 
 
 
@@ -41,10 +64,10 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-purple-600/80"></div>
                 <div className="relative z-10 p-4 md:p-6 h-full flex flex-col justify-center text-white">
                   <h3 className="text-lg md:text-xl font-bold mb-1 md:mb-2">Yangi mahsulotlar</h3>
-                  <p className="text-xs md:text-sm mb-3 md:mb-4">Eng so'nggi va eng yaxshi mahsulotlar</p>
+                  <p className="text-xs md:text-sm mb-3 md:mb-4">Eng so&apos;nggi va eng yaxshi mahsulotlar</p>
                   <Link href="/shop">
                     <Button variant="secondary" size="sm" className="text-xs md:text-sm">
-                      Ko'rish
+                      Ko&apos;rish
                   </Button>
                   </Link>
                 </div>
@@ -133,8 +156,8 @@ export default function HomePage() {
               <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
                 <Shield className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <h3 className="text-lg md:text-xl font-semibold mb-2">Xavfsiz to'lov</h3>
-              <p className="text-sm md:text-base text-gray-600">Barcha to'lovlar xavfsiz va himoyalangan</p>
+              <h3 className="text-lg md:text-xl font-semibold mb-2">Xavfsiz to&apos;lov</h3>
+              <p className="text-sm md:text-base text-gray-600">Barcha to&apos;lovlar xavfsiz va himoyalangan</p>
             </div>
             <div className="text-center sm:col-span-2 lg:col-span-1">
               <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
@@ -167,7 +190,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-3xl font-bold">
-                  "{searchQuery.trim()}" uchun qidiruv natijalari
+                  &quot;{searchQuery.trim()}&quot; uchun qidiruv natijalari
             </h2>
                 {!loading && (
                   <p className="text-gray-600 mt-2">
@@ -234,7 +257,7 @@ export default function HomePage() {
                   </div>
                   <p className="text-gray-500 text-lg mb-2">Mahsulotlar topilmadi</p>
                   <p className="text-gray-400 text-sm">
-                    "{searchQuery.trim()}" uchun hech qanday mahsulot topilmadi. Boshqa so'zlar bilan qidiring.
+                    &quot;{searchQuery.trim()}&quot; uchun hech qanday mahsulot topilmadi. Boshqa so&apos;zlar bilan qidiring.
                   </p>
               </div>
             )}
@@ -244,7 +267,7 @@ export default function HomePage() {
             <div className="text-center mt-8">
               <Link href="/shop">
                   <Button>
-                    Barcha {apiProducts.length} mahsulotni ko'rish
+                    Barcha {apiProducts.length} mahsulotni ko&apos;rish
                 </Button>
               </Link>
             </div>
@@ -261,7 +284,7 @@ export default function HomePage() {
             <div>
               <h3 className="font-bold mb-3 md:mb-4 text-sm md:text-base">BIZ HAQIMIZDA</h3>
               <p className="text-xs md:text-sm text-gray-400 mb-4 leading-relaxed">
-                Biz dunyo bo'ylab ishonchli sotuvchilardan eng yaxshi mahsulotlarni sizga yetkazishga ishtiyoq bilan qaratilganmiz.
+                Biz dunyo bo&apos;ylab ishonchli sotuvchilardan eng yaxshi mahsulotlarni sizga yetkazishga ishtiyoq bilan qaratilganmiz.
               </p>
             </div>
             <div>
@@ -274,7 +297,7 @@ export default function HomePage() {
                   Mening hisobim
                 </Link>
                 <Link href="/contact" className="block text-xs md:text-sm text-gray-400 hover:text-white transition-colors">
-                  Biz bilan bog'lanish
+                  Biz bilan bog&apos;lanish
                 </Link>
               </div>
             </div>

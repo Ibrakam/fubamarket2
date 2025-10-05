@@ -1,9 +1,12 @@
 // API Configuration
 // This file centralizes all API endpoints and makes them configurable
 
-const API_BASE_URL = "https://fubamarket.com"
+const API_BASE_URL = "http://127.0.0.1:8000"
 
 export const API_ENDPOINTS = {
+  // Base URL
+  API_BASE_URL: API_BASE_URL,
+  
   // Auth endpoints
   LOGIN: `${API_BASE_URL}/api/auth/login/`,
   REGISTER: `${API_BASE_URL}/api/auth/register/`,
@@ -14,6 +17,10 @@ export const API_ENDPOINTS = {
   PRODUCTS: `${API_BASE_URL}/api/products`,
   PRODUCT_BY_ID: (id: string) => `${API_BASE_URL}/api/products/${id}`,
   FEATURED_PRODUCTS: `${API_BASE_URL}/api/products/featured`,
+  
+  // Product Images endpoints
+  PRODUCT_IMAGES: `${API_BASE_URL}/api/product-images/`,
+  PRODUCT_IMAGE_BY_ID: (id: string) => `${API_BASE_URL}/api/product-images/${id}/`,
   
   // Review endpoints
   REVIEWS: `${API_BASE_URL}/api/reviews`,

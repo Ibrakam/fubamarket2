@@ -18,6 +18,7 @@ import Link from "next/link"
 import type { Product } from "@/contexts/cart-context"
 import { getProductImage } from "@/lib/product-images"
 import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
+import { getFirstProductPhoto, getProductPhotos } from "@/lib/product-photos"
 import API_ENDPOINTS from "@/lib/api-config"
 import styles from "./ProductButtons.module.css"
 
@@ -51,15 +52,10 @@ export default function ProductDetailPage() {
         // Convert API data to Product format
         let productImage = ""
         if (data.photos && Array.isArray(data.photos) && data.photos.length > 0) {
-          // If there are photos, use the first one
-          const firstPhoto = data.photos[0]
-          if (firstPhoto.image) {
-            // If it's a full URL, use as is, otherwise add API base URL
-            if (firstPhoto.image.startsWith('http')) {
-              productImage = firstPhoto.image
-            } else {
-              productImage = `https://fubamarket.com/${firstPhoto.image}`
-            }
+          // Use the utility function to get the first photo
+          const firstPhoto = getFirstProductPhoto(data.photos)
+          if (firstPhoto) {
+            productImage = firstPhoto
           }
         }
         
@@ -148,7 +144,7 @@ export default function ProductDetailPage() {
           <h1 className="text-2xl font-bold mb-4">Mahsulot topilmadi</h1>
           <p className="text-gray-600 mb-4">{error || "Qidirayotgan mahsulot mavjud emas."}</p>
           <Link href="/shop">
-            <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">Do'konga qaytish</Button>
+            <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">Do&apos;konga qaytish</Button>
           </Link>
         </div>
       </div>
@@ -158,7 +154,7 @@ export default function ProductDetailPage() {
   // Get all product images for gallery
   const productImages: string[] = product ? (
     product.photos && product.photos.length > 0 
-      ? product.photos.map(photo => photo.image).filter((url): url is string => Boolean(url))
+      ? getProductPhotos(product.photos)
       : [product.image].filter((url): url is string => Boolean(url)) // Fallback to single image if no photos
   ) : []
 
@@ -257,7 +253,7 @@ export default function ProductDetailPage() {
             {/* Size Selection */}
             {(product.category === "CLOTHING" || product.category === "SHOES") && (
               <div>
-                <h3 className="font-medium mb-3">O'lcham</h3>
+                <h3 className="font-medium mb-3">O&apos;lcham</h3>
                 <div className="flex space-x-2">
                   {sizes.map((size) => (
                     <button
@@ -310,7 +306,7 @@ export default function ProductDetailPage() {
                   <Truck className="w-5 h-5 text-green-600" />
                   <div>
                     <div className="font-medium">Bepul yetkazib berish</div>
-                    <div className="text-sm text-gray-600">630 000 so'm dan ortiq buyurtmalar uchun</div>
+                    <div className="text-sm text-gray-600">630 000 so&apos;m dan ortiq buyurtmalar uchun</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -323,8 +319,8 @@ export default function ProductDetailPage() {
                 <div className="flex items-center space-x-3">
                   <Shield className="w-5 h-5 text-purple-600" />
                   <div>
-                    <div className="font-medium">Xavfsiz to'lov</div>
-                    <div className="text-sm text-gray-600">Sizning to'lovingiz himoyalangan</div>
+                    <div className="font-medium">Xavfsiz to&apos;lov</div>
+                    <div className="text-sm text-gray-600">Sizning to&apos;lovingiz himoyalangan</div>
                   </div>
                 </div>
               </div>
@@ -342,7 +338,7 @@ export default function ProductDetailPage() {
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold mb-8">O'xshash mahsulotlar</h2>
+            <h2 className="text-2xl font-bold mb-8">O&apos;xshash mahsulotlar</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((relatedProduct) => (
                 <ProductCard key={relatedProduct.id} product={relatedProduct} onQuickView={() => {}} />

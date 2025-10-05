@@ -9,7 +9,7 @@ import { AnimatedButton } from "@/components/ui/animated-button"
 import { AnimatedCard } from "@/components/ui/animated-card"
 import { AnimatedIcon } from "@/components/ui/animated-icon"
 import { Heart, Star, ShoppingCart, TrendingUp, Users, Percent, Share2, Sparkles, Zap } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getProductImage } from "@/lib/product-images"
@@ -38,7 +38,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     setIsAuthenticated(!!(token && user))
   }, [])
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking add to cart
     
     if (!isAuthenticated) {
@@ -50,9 +50,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     addItem(product)
     // Simulate loading state
     setTimeout(() => setIsAddingToCart(false), 500)
-  }
+  }, [isAuthenticated, router, addItem, product])
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  const handleWishlistToggle = useCallback((e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking wishlist
     
     if (!isAuthenticated) {
@@ -65,7 +65,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     } else {
       addToWishlist(product)
     }
-  }
+  }, [isAuthenticated, router, inWishlist, removeFromWishlist, addToWishlist, product])
 
   const handleCreateReferralLink = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -108,13 +108,16 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       }
     } catch (error) {
       console.error('Error creating referral link:', error)
-      alert(`Referral havola yaratishda xatolik: ${error.message}`)
+      alert(`Referral havola yaratishda xatolik: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
   // Convert price to UZS
-  const priceInUzs = convertUsdToUzs(product.price)
-  const referralCommissionInUzs = product.referral_commission ? convertUsdToUzs(product.referral_commission) : 0
+  const priceInUzs = useMemo(() => convertUsdToUzs(product.price), [product.price])
+  const referralCommissionInUzs = useMemo(() => 
+    product.referral_commission ? convertUsdToUzs(product.referral_commission) : 0, 
+    [product.referral_commission]
+  )
 
   const handleProductClick = (e: React.MouseEvent) => {
     if (!isAuthenticated) {

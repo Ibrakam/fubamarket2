@@ -79,7 +79,7 @@ export default function ReferralPage() {
     )
   }
 
-  if (!user || user.role !== 'superadmin') {
+  if (!user || (user as any).role !== 'superadmin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
