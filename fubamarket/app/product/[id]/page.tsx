@@ -17,7 +17,7 @@ import { getAverageRating } from "@/data/reviews"
 import Link from "next/link"
 import type { Product } from "@/contexts/cart-context"
 import { getProductImage } from "@/lib/product-images"
-import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
+import { formatUzsWithSpaces } from "@/lib/currency"
 import { getFirstProductPhoto, getProductPhotos } from "@/lib/product-photos"
 import API_ENDPOINTS from "@/lib/api-config"
 import styles from "./ProductButtons.module.css"
@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              <div className="text-3xl font-bold text-blue-600 mb-4">{formatUzsWithSpaces(convertUsdToUzs(product.price))}</div>
+              <div className="text-3xl font-bold text-blue-600 mb-4">{formatUzsWithSpaces(product.price)}</div>
 
               <p className="text-gray-700 mb-6">{product.description}</p>
             </div>

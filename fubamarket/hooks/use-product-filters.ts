@@ -41,7 +41,7 @@ export function useProductFilters() {
           return {
             id: String(p.id || ""),
             name: String(p.title || p.name || "Untitled Product"),
-            price: (Number(p.price_uzs) || 0) / 100, // Convert from cents to dollars
+            price: Number(p.price_uzs) || 0, // Price is already in UZS, no conversion needed
             image: productImage,
             category: "",
             rating: 5,

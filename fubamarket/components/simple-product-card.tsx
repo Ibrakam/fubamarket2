@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Heart, Star, ShoppingCart } from "lucide-react"
 import { useState } from "react"
 import Link from "next/link"
-import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface Product {
   id: string
@@ -26,8 +26,8 @@ interface SimpleProductCardProps {
 export function SimpleProductCard({ product, onQuickView }: SimpleProductCardProps) {
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   
-  // Convert price to UZS
-  const priceInUzs = convertUsdToUzs(product.price)
+  // Price is already in UZS
+  const priceInUzs = product.price
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()

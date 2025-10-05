@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Heart, ShoppingCart, X, Star } from "lucide-react"
 import { useState } from "react"
-import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
+import { formatUzsWithSpaces } from "@/lib/currency"
 import Image from "next/image"
 
 export function WishlistDrawer() {
@@ -74,7 +74,7 @@ export function WishlistDrawer() {
                       </div>
                       <span className="text-xs text-gray-500 ml-1">({item.rating})</span>
                     </div>
-                    <p className="font-bold text-lg mt-1">{formatUzsWithSpaces(convertUsdToUzs(item.price))}</p>
+                    <p className="font-bold text-lg mt-1">{formatUzsWithSpaces(item.price)}</p>
                   </div>
                   <div className="flex flex-col space-y-2">
                     <Button

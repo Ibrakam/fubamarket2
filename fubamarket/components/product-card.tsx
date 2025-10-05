@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getProductImage } from "@/lib/product-images"
-import { convertUsdToUzs, formatUzsWithSpaces } from "@/lib/currency"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface ProductCardProps {
   product: Product
@@ -112,10 +112,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     }
   }
 
-  // Convert price to UZS
-  const priceInUzs = useMemo(() => convertUsdToUzs(product.price), [product.price])
+  // Price is already in UZS, no conversion needed
+  const priceInUzs = useMemo(() => product.price, [product.price])
   const referralCommissionInUzs = useMemo(() => 
-    product.referral_commission ? convertUsdToUzs(product.referral_commission) : 0, 
+    product.referral_commission || 0, 
     [product.referral_commission]
   )
 
