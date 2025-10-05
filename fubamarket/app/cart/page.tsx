@@ -8,37 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 export default function CartPage() {
   const { items, total, itemCount, removeItem, updateQuantity, proceedToCheckout } = useCart()
   const { user } = useAuth()
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Autentifikatsiya talab qilinadi</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">Savatni ko'rish uchun tizimga kirish kerak</p>
-            <div className="space-y-2">
-              <Link href="/login?redirect=cart">
-                <Button className="w-full">
-                  Kirish
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="outline" className="w-full">
-                  Ro'yxatdan o'tish
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // Разрешаем просмотр корзины без авторизации
 
   if (items.length === 0) {
     return (
@@ -123,7 +99,7 @@ export default function CartPage() {
 
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {formatUzsWithSpaces(item.price * item.quantity)}
                         </p>
                         <Button
                           variant="ghost"
@@ -149,7 +125,7 @@ export default function CartPage() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between text-sm">
                     <span>Mahsulotlar ({itemCount})</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{formatUzsWithSpaces(total)}</span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
@@ -160,7 +136,7 @@ export default function CartPage() {
                   <div className="border-t pt-4">
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Jami</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{formatUzsWithSpaces(total)}</span>
                     </div>
                   </div>
 

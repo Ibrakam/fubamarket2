@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Filter, Star } from "lucide-react"
 import { categories } from "@/data/products"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 export interface FilterState {
   category: string
@@ -100,7 +101,7 @@ export function ProductFilters({ filters, onFiltersChange, onClearFilters, resul
               {/* Price Range Filter */}
               <div>
                 <Label className="text-sm font-medium mb-3 block">
-                  Narx oralig'i: ${filters.priceRange[0]} - ${filters.priceRange[1]}
+                  Narx oralig'i: {formatUzsWithSpaces(filters.priceRange[0])} - {formatUzsWithSpaces(filters.priceRange[1])}
                 </Label>
                 <Slider
                   value={filters.priceRange}

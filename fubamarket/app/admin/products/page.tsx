@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Edit, Trash2, Shield, Link as LinkIcon } from "lucide-react"
+import { ArrowLeft, Plus, Edit, Trash2, Shield, Link as LinkIcon, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -419,6 +419,14 @@ export default function AdminProductsPage() {
     console.log(`Successfully deleted ${successCount}/${photosToDelete.length} photos`)
   }
 
+  const clearCart = () => {
+    if (confirm('Вы уверены, что хотите очистить корзину? Это удалит все товары из корзины пользователей.')) {
+      localStorage.removeItem('cart')
+      localStorage.removeItem('wishlist')
+      toast.success('Корзина очищена!')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -469,10 +477,16 @@ export default function AdminProductsPage() {
                 </p>
               </div>
             </div>
-            <Button onClick={() => setShowCreateForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Добавить продукт
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowCreateForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Добавить продукт
+              </Button>
+              <Button variant="outline" onClick={clearCart}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Очистить корзину
+              </Button>
+            </div>
           </div>
         </div>
       </div>

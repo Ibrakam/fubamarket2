@@ -156,11 +156,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [state.items])
 
   const addItem = (product: Product) => {
-    if (!user) {
-      // Если пользователь не авторизован, перенаправляем на страницу входа
-      router.push('/login?redirect=cart')
-      return
-    }
+    // Разрешаем добавлять в корзину без авторизации
     dispatch({ type: "ADD_ITEM", payload: product })
   }
 
@@ -177,10 +173,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const proceedToCheckout = () => {
-    if (!user) {
-      router.push('/login?redirect=checkout')
-      return
-    }
     if (state.items.length === 0) {
       alert('Корзина пуста')
       return

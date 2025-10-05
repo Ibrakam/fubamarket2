@@ -41,16 +41,11 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking add to cart
     
-    if (!isAuthenticated) {
-      router.push('/login')
-      return
-    }
-    
     setIsAddingToCart(true)
     addItem(product)
     // Simulate loading state
     setTimeout(() => setIsAddingToCart(false), 500)
-  }, [isAuthenticated, router, addItem, product])
+  }, [addItem, product])
 
   const handleWishlistToggle = useCallback((e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking wishlist
@@ -120,16 +115,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   )
 
   const handleProductClick = (e: React.MouseEvent) => {
-    if (!isAuthenticated) {
-      e.preventDefault()
-      router.push('/login')
-      return
-    }
+    // Разрешаем просмотр продукта без авторизации
   }
 
   return (
     <div className="group relative bg-white rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 hover:border-orange-200/50 hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-[1.01] sm:hover:scale-[1.02] backdrop-blur-sm">
-      <Link href={isAuthenticated ? `/product/${product.id}` : '/login'} className="block" onClick={handleProductClick}>
+      <Link href={`/product/${product.id}`} className="block" onClick={handleProductClick}>
         {/* Product Image Container */}
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           <img
@@ -146,10 +137,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             <button
               onClick={(e) => {
                 e.preventDefault()
-                if (!isAuthenticated) {
-                  router.push('/login')
-                  return
-                }
                 onQuickView?.(product)
               }}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-xs sm:text-sm font-semibold py-2 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105 backdrop-blur-sm"

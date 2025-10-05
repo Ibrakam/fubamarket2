@@ -13,6 +13,7 @@ import { ArrowLeft, CreditCard, MapPin, User } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import API_ENDPOINTS from "@/lib/api-config"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 export default function CheckoutPage() {
   const { items, total, itemCount, clearCart } = useCart()
@@ -52,9 +53,9 @@ export default function CheckoutPage() {
         items: items.map(item => ({
           product_id: parseInt(item.id),
           quantity: item.quantity,
-          price: item.price * 100 // Конвертируем в центы
+          price: item.price // Цена уже в сумах, не нужно конвертировать
         })),
-        total_amount: total * 100, // Конвертируем в центы
+        total_amount: total, // Цена уже в сумах, не нужно конвертировать
         shipping_address: `${orderData.address}, ${orderData.city}, ${orderData.postalCode}, ${orderData.country}`,
         payment_method: orderData.paymentMethod,
         notes: orderData.notes
@@ -96,32 +97,7 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Autentifikatsiya talab qilinadi</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">Buyurtma berish uchun tizimga kirish kerak</p>
-            <div className="space-y-2">
-              <Link href="/login?redirect=checkout">
-                <Button className="w-full">
-                  Kirish
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="outline" className="w-full">
-                  Ro'yxatdan o'tish
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // Разрешаем оформление заказа без авторизации
 
   if (items.length === 0 && !orderSuccess) {
     return (
@@ -368,11 +344,11 @@ export default function CheckoutPage() {
                           {item.name}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {item.quantity} × ${item.price.toFixed(2)}
+                          {item.quantity} × {formatUzsWithSpaces(item.price)}
                         </p>
                       </div>
                       <p className="text-sm font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatUzsWithSpaces(item.price * item.quantity)}
                       </p>
                     </div>
                   ))}
@@ -380,7 +356,7 @@ export default function CheckoutPage() {
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Mahsulotlar ({itemCount})</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{formatUzsWithSpaces(total)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Yetkazib berish</span>
@@ -388,7 +364,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex justify-between text-lg font-semibold border-t pt-2">
                       <span>Jami</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{formatUzsWithSpaces(total)}</span>
                     </div>
                   </div>
 
