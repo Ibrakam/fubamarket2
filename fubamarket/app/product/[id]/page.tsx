@@ -67,7 +67,7 @@ export default function ProductDetailPage() {
         const productData: Product = {
           id: String(data.id),
           name: data.title || data.name || "Untitled Product",
-          price: (Number(data.price_uzs) || 0) / 100,
+          price: Number(data.price_uzs) || 0, // Price is already in UZS, no conversion needed
           image: productImage,
           category: "",
           rating: 5,
@@ -103,7 +103,7 @@ export default function ProductDetailPage() {
             return {
               id: String(product.id),
               name: String(product.title || product.name || "Untitled Product"),
-              price: (Number(product.price_uzs) || 0) / 100,
+              price: Number(product.price_uzs) || 0, // Price is already in UZS, no conversion needed
               image: getProductImage(product),
               category: "",
               rating: 5,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import API_ENDPOINTS from "@/lib/api-config"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 export default function TestPage() {
   const [products, setProducts] = useState([])
@@ -59,7 +60,7 @@ export default function TestPage() {
         {products.map((product: any) => (
           <div key={product.id} className="border p-4 rounded">
             <h3 className="font-semibold">{product.title}</h3>
-            <p className="text-gray-600">Price: ${(product.price_uzs / 100).toFixed(2)}</p>
+            <p className="text-gray-600">Price: {formatUzsWithSpaces(product.price_uzs)}</p>
             <p className="text-sm text-gray-500">{product.description}</p>
             {product.photos && product.photos.length > 0 && (
               <img 

@@ -55,7 +55,7 @@ export function FeaturedProducts() {
             return {
               id: String(product.id),
               name: product.title || "Untitled Product",
-              price: (Number(product.price_uzs) || 0) / 100,
+              price: Number(product.price_uzs) || 0, // Price is already in UZS, no conversion needed
               image: productImage,
               category: product.category_name || "",
               rating: 5,

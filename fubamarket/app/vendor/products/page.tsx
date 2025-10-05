@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Eye, Package, DollarSign, TrendingUp, Plus } from "lucide-react"
 import API_ENDPOINTS from "@/lib/api-config"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface Product {
   id: number
@@ -245,7 +246,7 @@ export default function VendorProductsPage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Narx</p>
-                  <p className="font-medium text-lg">${(parseFloat(product.price_uzs) / 100).toFixed(2)}</p>
+                  <p className="font-medium text-lg">{formatUzsWithSpaces(parseFloat(product.price_uzs))}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Zaxira</p>

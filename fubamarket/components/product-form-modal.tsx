@@ -33,7 +33,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave, categories 
       setFormData({
         title: product.title || '',
         description: product.description || '',
-        price_uzs: product.price_uzs ? (parseFloat(product.price_uzs) / 100).toString() : '',
+        price_uzs: product.price_uzs ? parseFloat(product.price_uzs).toString() : '', // Price is already in UZS, no conversion needed
         stock: product.stock?.toString() || '',
         category: product.category?.toString() || '',
         is_active: product.is_active !== false

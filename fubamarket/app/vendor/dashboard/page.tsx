@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Package, ShoppingCart, DollarSign, ArrowRight, Plus } from "lucide-react"
 import Link from "next/link"
 import API_ENDPOINTS from "@/lib/api-config"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface VendorStats {
   user: {
@@ -221,7 +222,7 @@ export default function VendorDashboard() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-medium text-sm">{product.title}</h3>
-                        <p className="text-sm text-gray-500">${(product.price_uzs / 100).toFixed(2)}</p>
+                        <p className="text-sm text-gray-500">{formatUzsWithSpaces(product.price_uzs)}</p>
                         <p className="text-xs text-gray-400">
                           {product.is_active ? "Faol" : "Nofaol"}
                         </p>
