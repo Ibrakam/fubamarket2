@@ -282,24 +282,35 @@ class ProductImageSerializer(serializers.ModelSerializer):
     
     def get_image_url(self, obj):
         if obj.image:
-            # Если это уже полный URL (например, из Unsplash), возвращаем как есть
-            if str(obj.image).startswith('http'):
-                return str(obj.image)
-            
-            # Если это файл в медиа, строим полный URL
-            request = self.context.get('request')
-            if request:
+            from urllib.parse import unquote
+            name_str = str(obj.image)
+            url_attr = getattr(obj.image, 'url', None)
+
+            # 1) Если поле хранит абсолютный URL (или его URL-encoded версию) — вернуть внешний URL
+            try:
+                decoded_name = unquote(name_str)
+            except Exception:
+                decoded_name = name_str
+            if decoded_name.startswith('http'):
+                return decoded_name
+
+            if isinstance(url_attr, str):
                 try:
-                    return request.build_absolute_uri(obj.image.url)
+                    decoded_url = unquote(url_attr)
                 except Exception:
-                    # Бывают случаи, когда в базе хранится URL-encoded строка (например, "https%3A/...")
-                    # Попробуем распознать и вернуть корректный внешний URL
-                    from urllib.parse import unquote
-                    decoded = unquote(str(obj.image))
-                    if decoded.startswith('http'):
-                        return decoded
-                    return request.build_absolute_uri(str(obj.image))
-            return obj.image.url
+                    decoded_url = url_attr
+                # Пример: "/media/https%3A/images.unsplash.com/..." -> вернуть внешний https URL
+                if decoded_url.startswith('/media/https:') or decoded_url.startswith('/media/http:'):
+                    # Отрезаем префикс "/media/" и возвращаем внешний URL
+                    external_part = decoded_url[len('/media/'):]
+                    return external_part
+
+            # 2) Обычный файл в MEDIA_ROOT — вернуть абсолютный URL
+            request = self.context.get('request')
+            if request and url_attr:
+                return request.build_absolute_uri(url_attr)
+            if url_attr:
+                return url_attr
         return None
 
 
