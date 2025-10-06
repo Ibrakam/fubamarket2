@@ -32,7 +32,7 @@
                     {
                         id: 3,
                         product: 11,
-                        image: "http://127.0.0.1:8000/media/https%3A/images.unsplash.com/photo-1441986300917-64674bd600d8%3Fw%3D400%26h%3D400%26fit%3Dcrop",
+                        image: "https://fubamarket.com/media/https%3A/images.unsplash.com/photo-1441986300917-64674bd600d8%3Fw%3D400%26h%3D400%26fit%3Dcrop",
                         image_url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
                         alt: "Default photo for Test Product",
                         sort_order: 0,
@@ -58,7 +58,7 @@
                 if (firstPhoto.image.startsWith('http')) {
                     return firstPhoto.image;
                 } else {
-                    return `http://127.0.0.1:8000/${firstPhoto.image}`;
+                    return `https://fubamarket.com/${firstPhoto.image}`;
                 }
             }
             
@@ -84,7 +84,7 @@
                         return firstPhoto.image;
                     }
                     // If it's a relative path, add API base URL
-                    return `http://127.0.0.1:8000/${firstPhoto.image}`;
+                    return `https://fubamarket.com/${firstPhoto.image}`;
                 }
             }
 

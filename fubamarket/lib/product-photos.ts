@@ -2,7 +2,7 @@
  * Utility functions for handling product photos
  */
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = "https://fubamarket.com"
 
 /**
  * Get the correct image URL for a product photo

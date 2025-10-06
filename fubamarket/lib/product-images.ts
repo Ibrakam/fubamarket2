@@ -16,7 +16,7 @@ export function getProductImage(product: any): string {
         return firstPhoto.image
       }
       // Если это относительный путь, добавляем базовый URL API
-      return `http://127.0.0.1:8000/${firstPhoto.image}`
+      return `https://fubamarket.com/${firstPhoto.image}`
     }
   }
 

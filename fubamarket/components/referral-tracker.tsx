@@ -30,7 +30,7 @@ export function ReferralTracker({ productId }: ReferralTrackerProps) {
       if (referralCode && utmSource === 'referral') {
         try {
           // Отправляем данные о реферальном переходе на сервер
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/'}/api/referral-visits/`, {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://fubamarket.com/'}/api/referral-visits/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

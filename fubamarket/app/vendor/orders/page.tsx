@@ -52,7 +52,7 @@ export default function VendorOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000//api/vendor/orders', {
+      const response = await fetch('https://fubamarket.com//api/vendor/orders', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -71,7 +71,7 @@ export default function VendorOrdersPage() {
 
   const updateOrderStatus = async (orderId: number, status: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000//api/vendor/orders/${orderId}/status`, {
+      const response = await fetch(`https://fubamarket.com//api/vendor/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

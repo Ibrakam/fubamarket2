@@ -35,7 +35,7 @@
 
 ### 3. **Проверьте API напрямую**
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/products/featured/" | jq '.[0] | {id, title, photos: .photos[0:2]}'
+curl -X GET "https://fubamarket.com/api/products/featured/" | jq '.[0] | {id, title, photos: .photos[0:2]}'
 ```
 
 ### 4. **Проверьте другие страницы**

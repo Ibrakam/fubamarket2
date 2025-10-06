@@ -2,7 +2,7 @@
 
 ## ❌ **Проблема:**
 ```
-Invalid src prop (http://127.0.0.1:8000/media/products/2025/10/05/photo_2025-09-29_22.46.39.jpeg) on `next/image`, hostname "127.0.0.1" is not configured under images in your `next.config.js`
+Invalid src prop (https://fubamarket.com/media/products/2025/10/05/photo_2025-09-29_22.46.39.jpeg) on `next/image`, hostname "127.0.0.1" is not configured under images in your `next.config.js`
 ```
 
 ## ✅ **Решение:**
@@ -36,7 +36,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:8000/api/:path*',
+        destination: 'https://fubamarket.com/api/:path*',
       },
     ]
   },
@@ -47,7 +47,7 @@ module.exports = nextConfig
 
 ### 2. **Что добавлено:**
 - ✅ Конфигурация `images.remotePatterns` для Django медиа файлов
-- ✅ Поддержка `http://127.0.0.1:8000/media/**` для локальных изображений
+- ✅ Поддержка `https://fubamarket.com/media/**` для локальных изображений
 - ✅ Поддержка `https://images.unsplash.com/**` для дефолтных изображений
 - ✅ Исправлен двойной слеш в rewrite правиле
 

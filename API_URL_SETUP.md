@@ -9,7 +9,7 @@
 - **Функция**: Централизует все API endpoints и делает их конфигурируемыми
 
 ### 2. Переменные окружения
-- **Development**: `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000`
+- **Development**: `NEXT_PUBLIC_API_URL=https://fubamarket.com`
 - **Production**: `NEXT_PUBLIC_API_URL=/api`
 
 ### 3. Обновлены все компоненты
@@ -20,7 +20,7 @@
 ### Development
 Создайте файл `fubamarket/.env.local`:
 ```bash
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_API_URL=https://fubamarket.com
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -40,7 +40,7 @@ NODE_ENV=production
 cp fubamarket/env.local.example fubamarket/.env.local
 
 # Или создайте вручную
-echo "NEXT_PUBLIC_API_URL=http://127.0.0.1:8000" > fubamarket/.env.local
+echo "NEXT_PUBLIC_API_URL=https://fubamarket.com" > fubamarket/.env.local
 echo "NEXT_PUBLIC_APP_URL=http://localhost:3000" >> fubamarket/.env.local
 
 # Для production
@@ -107,7 +107,7 @@ import API_ENDPOINTS from '@/lib/api-config'
 2. **Замените жестко заданные URL**:
 ```typescript
 // Было
-const response = await fetch('http://127.0.0.1:8000/api/products')
+const response = await fetch('https://fubamarket.com/api/products')
 
 // Стало
 const response = await fetch(API_ENDPOINTS.PRODUCTS)
@@ -127,14 +127,14 @@ cat fubamarket/.env.production
 ### Проверить, что все URL обновлены
 ```bash
 # Найти оставшиеся жестко заданные URL
-grep -r "http://127.0.0.1:8000" fubamarket --include="*.tsx" --include="*.ts"
+grep -r "https://fubamarket.com" fubamarket --include="*.tsx" --include="*.ts"
 ```
 
 ## 🚨 Важные моменты
 
 1. **Переменные окружения** должны начинаться с `NEXT_PUBLIC_` для доступности в браузере
 2. **В production** используйте `/api` как базовый путь (относительный URL)
-3. **В development** используйте полный URL с портом (например, `http://127.0.0.1:8000`)
+3. **В development** используйте полный URL с портом (например, `https://fubamarket.com`)
 4. **Перезапустите** Next.js сервер после изменения переменных окружения
 4. **Проверьте** CORS настройки в Django для production домена
 

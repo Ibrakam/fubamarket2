@@ -1,7 +1,7 @@
 // API Configuration
 // This file centralizes all API endpoints and makes them configurable
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = "https://fubamarket.com"
 
 export const API_ENDPOINTS = {
   // Base URL

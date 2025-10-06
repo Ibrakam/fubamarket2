@@ -43,7 +43,7 @@ export default function VendorWithdrawalsPage() {
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000//api/vendor/withdrawals', {
+      const response = await fetch('https://fubamarket.com//api/vendor/withdrawals', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -62,7 +62,7 @@ export default function VendorWithdrawalsPage() {
 
   const createWithdrawal = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000//api/vendor/withdrawals/create', {
+      const response = await fetch('https://fubamarket.com//api/vendor/withdrawals/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

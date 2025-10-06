@@ -60,12 +60,12 @@ def add_default_photos(request):
 
 ### 1. **Проверка API**
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/products/featured/" | jq '.[0] | {id, title, photos: .photos[0:2]}'
+curl -X GET "https://fubamarket.com/api/products/featured/" | jq '.[0] | {id, title, photos: .photos[0:2]}'
 ```
 
 ### 2. **Добавление дефолтных фотографий**
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/add-default-photos/"
+curl -X POST "https://fubamarket.com/api/add-default-photos/"
 ```
 
 ### 3. **Проверка главной страницы**
