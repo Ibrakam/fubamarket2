@@ -289,7 +289,16 @@ class ProductImageSerializer(serializers.ModelSerializer):
             # Если это файл в медиа, строим полный URL
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
+                try:
+                    return request.build_absolute_uri(obj.image.url)
+                except Exception:
+                    # Бывают случаи, когда в базе хранится URL-encoded строка (например, "https%3A/...")
+                    # Попробуем распознать и вернуть корректный внешний URL
+                    from urllib.parse import unquote
+                    decoded = unquote(str(obj.image))
+                    if decoded.startswith('http'):
+                        return decoded
+                    return request.build_absolute_uri(str(obj.image))
             return obj.image.url
         return None
 

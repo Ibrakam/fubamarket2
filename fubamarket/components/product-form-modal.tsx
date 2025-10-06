@@ -73,7 +73,7 @@ export function ProductFormModal({ isOpen, onClose, product, onSave, categories 
     try {
       const productData = {
         ...formData,
-        price_uzs: parseFloat(formData.price_uzs).toString(), // Цена уже в сумах, не нужно конвертировать
+        price_uzs: parseFloat(formData.price_uzs || '0'), // Отправляем числом, backend ожидает Decimal
         stock: parseInt(formData.stock) || 0,
         category: formData.category || null
       }

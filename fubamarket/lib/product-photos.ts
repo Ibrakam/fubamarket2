@@ -11,18 +11,25 @@ const API_BASE_URL = "https://fubamarket.com"
 export function getProductPhotoUrl(photo: any): string | null {
   if (!photo) return null
 
-  // If image_url is available, use it
+  // Prefer image_url if present; handle possible URL-encoded strings
   if (photo.image_url) {
-    return photo.image_url
+    try {
+      const decoded = decodeURIComponent(photo.image_url)
+      if (decoded.startsWith('http')) return decoded
+    } catch {}
+    if (typeof photo.image_url === 'string' && photo.image_url.startsWith('http')) return photo.image_url
   }
 
-  // If image field has a value, use it
+  // If image field has a value, handle absolute, encoded, or relative paths
   if (photo.image) {
-    if (photo.image.startsWith('http')) {
+    try {
+      const decoded = decodeURIComponent(photo.image)
+      if (decoded.startsWith('http')) return decoded
+    } catch {}
+    if (typeof photo.image === 'string' && photo.image.startsWith('http')) {
       return photo.image
-    } else {
-      return `${API_BASE_URL}/${photo.image}`
     }
+    return `${API_BASE_URL}/${photo.image}`
   }
 
   // If both image and image_url are null, return null
