@@ -26,7 +26,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-7(row@9lfdfi981h@%m0&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ['fubamarket.com', 'www.fubamarket.com', 'localhost', '127.0.0.1']
+
+# CSRF trusted origins (HTTPS in production)
+CSRF_TRUSTED_ORIGINS = ['https://fubamarket.com', 'https://www.fubamarket.com']
 
 
 # Application definition

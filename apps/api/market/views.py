@@ -841,14 +841,38 @@ class AdminUserCreateView(generics.CreateAPIView):
 
 
 # Admin Product Management
-class AdminProductListView(generics.ListAPIView):
-    serializer_class = ProductSerializer
+class AdminProductListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         if self.request.user.role != 'superadmin':
             return Product.objects.none()
         return Product.objects.all()
+
+    def get_serializer_class(self):
+        # GET: список продуктов с полными полями
+        if self.request.method == 'GET':
+            return ProductSerializer
+        # POST: создание продукта (назначаем vendor = request.user)
+        return ProductCreateSerializer
+
+    def perform_create(self, serializer):
+        # Только супер-админ может создавать из этого эндпоинта
+        if self.request.user.role != 'superadmin':
+            raise permissions.PermissionDenied('Access denied')
+        serializer.save(vendor=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        # Используем ProductCreateSerializer для валидации,
+        # но возвращаем в ответе полное представление ProductSerializer,
+        # чтобы фронт сразу получил все ожидаемые поля
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        instance = Product.objects.get(pk=serializer.instance.pk)
+        full_serializer = ProductSerializer(instance, context={'request': request})
+        headers = self.get_success_headers(full_serializer.data)
+        return Response(full_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class AdminProductDetailView(generics.RetrieveUpdateDestroyAPIView):
