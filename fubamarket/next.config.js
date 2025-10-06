@@ -9,6 +9,14 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
+        protocol: 'https',
+        hostname: 'fubamarket.com',
+        port: '',
+        pathname: '/media/**',
+      },
+    ],
+    remotePatterns: [
+      {
         protocol: 'http',
         hostname: '127.0.0.1',
         port: '8000',
@@ -25,7 +33,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://fubamarket.com/api/:path*',
+        destination: 'http://127.0.0.1:8000/api/:path*',
       },
     ]
   },
