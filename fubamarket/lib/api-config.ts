@@ -38,7 +38,7 @@ export const API_ENDPOINTS = {
   
   // Order endpoints
   ORDERS: `${API_BASE_URL}/api/orders`,
-  CREATE_ORDER: `${API_BASE_URL}/api/orders/create`,
+  CREATE_ORDER: `${API_BASE_URL}/api/orders/`,
   ORDER_BY_ID: (id: string) => `${API_BASE_URL}/api/orders/${id}`,
   
   // Admin endpoints
@@ -53,19 +53,19 @@ export const API_ENDPOINTS = {
   ADMIN_WITHDRAWALS: `${API_BASE_URL}/api/admin/withdrawals/`,
   ADMIN_WITHDRAWAL_BY_ID: (id: string) => `${API_BASE_URL}/api/admin/withdrawals/${id}/`,
   
-  // Vendor endpoints
-  VENDOR_PRODUCTS: `${API_BASE_URL}/api/vendor/products`,
-  VENDOR_PRODUCT_BY_ID: (id: string) => `${API_BASE_URL}/api/vendor/products/${id}`,
-  VENDOR_CREATE_PRODUCT: `${API_BASE_URL}/api/vendor/products/create`,
-  VENDOR_ORDERS: `${API_BASE_URL}/api/vendor/orders`,
-  VENDOR_WITHDRAWALS: `${API_BASE_URL}/api/vendor/withdrawals`,
-  VENDOR_CREATE_WITHDRAWAL: `${API_BASE_URL}/api/vendor/withdrawals/create`,
+  // Vendor endpoints (using admin endpoints for now)
+  VENDOR_PRODUCTS: `${API_BASE_URL}/api/admin/products/`,
+  VENDOR_PRODUCT_BY_ID: (id: string) => `${API_BASE_URL}/api/admin/products/${id}/`,
+  VENDOR_CREATE_PRODUCT: `${API_BASE_URL}/api/admin/products/`,
+  VENDOR_ORDERS: `${API_BASE_URL}/api/admin/orders/`,
+  VENDOR_WITHDRAWALS: `${API_BASE_URL}/api/admin/withdrawals/`,
+  VENDOR_CREATE_WITHDRAWAL: `${API_BASE_URL}/api/admin/withdrawals/`,
   
-  // Ops endpoints
-  OPS_ORDERS: `${API_BASE_URL}/api/ops/orders`,
-  OPS_ORDER_STATUS: (id: string) => `${API_BASE_URL}/api/ops/orders/${id}/status`,
-  OPS_WITHDRAWALS: `${API_BASE_URL}/api/ops/withdrawals`,
-  OPS_PROCESS_WITHDRAWAL: (id: string) => `${API_BASE_URL}/api/ops/withdrawals/${id}/process`,
+  // Ops endpoints (using admin endpoints for now)
+  OPS_ORDERS: `${API_BASE_URL}/api/admin/orders/`,
+  OPS_ORDER_STATUS: (id: string) => `${API_BASE_URL}/api/orders/${id}/update-status/`,
+  OPS_WITHDRAWALS: `${API_BASE_URL}/api/admin/withdrawals/`,
+  OPS_PROCESS_WITHDRAWAL: (id: string) => `${API_BASE_URL}/api/withdrawals/${id}/process/`,
   
   // Stats endpoint
   STATS: `${API_BASE_URL}/api/stats`,
