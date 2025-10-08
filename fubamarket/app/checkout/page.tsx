@@ -25,13 +25,9 @@ export default function CheckoutPage() {
   const [orderData, setOrderData] = useState({
     firstName: user?.first_name || '',
     lastName: user?.last_name || '',
-    email: user?.email || '',
     phone: user?.phone || '',
     address: '',
     city: '',
-    postalCode: '',
-    country: 'Uzbekistan',
-    paymentMethod: 'cash',
     notes: ''
   })
 
@@ -58,8 +54,8 @@ export default function CheckoutPage() {
         total_amount: total, // Цена уже в сумах, не нужно конвертировать
         customer_name: `${orderData.firstName} ${orderData.lastName}`.trim(),
         customer_phone: orderData.phone,
-        customer_address: `${orderData.address}, ${orderData.city}, ${orderData.postalCode}, ${orderData.country}`,
-        payment_method: orderData.paymentMethod,
+        customer_address: `${orderData.address}, ${orderData.city}`,
+        payment_method: 'cash',
         notes: orderData.notes
       }
 
@@ -200,17 +196,6 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={orderData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
 
                   <div>
                     <Label htmlFor="phone">Telefon</Label>
@@ -235,35 +220,12 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">Shahar</Label>
-                      <Input
-                        id="city"
-                        name="city"
-                        value={orderData.city}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="postalCode">Pochta indeksi</Label>
-                      <Input
-                        id="postalCode"
-                        name="postalCode"
-                        value={orderData.postalCode}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-
                   <div>
-                    <Label htmlFor="country">Mamlakat</Label>
+                    <Label htmlFor="city">Shahar</Label>
                     <Input
-                      id="country"
-                      name="country"
-                      value={orderData.country}
+                      id="city"
+                      name="city"
+                      value={orderData.city}
                       onChange={handleInputChange}
                       required
                     />
@@ -271,41 +233,6 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
 
-              {/* Способ оплаты */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    To'lov usuli
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="cash"
-                        checked={orderData.paymentMethod === 'cash'}
-                        onChange={handleInputChange}
-                        className="text-orange-500"
-                      />
-                      <span>Olish vaqtida naqd pul</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="card"
-                        checked={orderData.paymentMethod === 'card'}
-                        onChange={handleInputChange}
-                        className="text-orange-500"
-                      />
-                      <span>Bank kartasi</span>
-                    </label>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Дополнительные заметки */}
               <Card>
