@@ -86,7 +86,7 @@
 ### ✅ **API Тестирование:**
 ```bash
 # Проверка featured products
-curl -X GET "https://fubamarket.com/api/products/featured/" | jq '.[0] | {id, title, photos: .photos[0:2]}'
+curl -X GET "http://127.0.0.1:8000/api/products/featured/" | jq '.[0] | {id, title, photos: .photos[0:2]}'
 
 # Результат: ✅ Возвращает продукты с фотографиями
 {
@@ -108,7 +108,7 @@ curl -X GET "https://fubamarket.com/api/products/featured/" | jq '.[0] | {id, ti
 ### ✅ **Безопасность:**
 ```bash
 # Проверка аутентификации
-curl -X POST "https://fubamarket.com/api/add-default-photos/"
+curl -X POST "http://127.0.0.1:8000/api/add-default-photos/"
 
 # Результат: ✅ Требует аутентификации
 {"detail":"Authentication credentials were not provided."}

@@ -101,7 +101,7 @@ export default function AdminProductsPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch(`https://fubamarket.com/api/categories/`, {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/categories/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

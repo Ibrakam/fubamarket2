@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useAuth } from "@/contexts/auth-context"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface AddUserModalProps {
   isOpen: boolean
@@ -45,7 +46,7 @@ export function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps
 
     setLoading(true)
     try {
-      const response = await fetch('https://fubamarket.com//api/admin/users/create', {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/admin/users/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

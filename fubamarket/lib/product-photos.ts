@@ -2,7 +2,9 @@
  * Utility functions for handling product photos
  */
 
-const API_BASE_URL = "https://fubamarket.com"
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? "https://fubamarket.com" 
+  : "http://127.0.0.1:8000"
 
 /**
  * Get the correct image URL for a product photo

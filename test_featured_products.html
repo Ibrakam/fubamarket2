@@ -21,7 +21,7 @@
     <script>
         async function fetchProducts() {
             try {
-                const response = await fetch('https://fubamarket.com/api/products/featured/');
+                const response = await fetch('http://127.0.0.1:8000/api/products/featured/');
                 const data = await response.json();
                 
                 console.log('API Response:', data);

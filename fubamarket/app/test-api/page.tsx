@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import API_ENDPOINTS from '@/lib/api-config'
 
 export default function TestApiPage() {
   const [data, setData] = useState(null)
@@ -11,7 +12,7 @@ export default function TestApiPage() {
     const testApi = async () => {
       try {
         console.log('Testing API...')
-        const response = await fetch('https://fubamarket.com//api/products/9/')
+        const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/products/9/`)
         console.log('Response status:', response.status)
         
         if (response.ok) {

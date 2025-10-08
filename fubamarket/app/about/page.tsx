@@ -5,9 +5,9 @@ export default function AboutPage() {
       <section className="bg-gradient-to-r from-orange-50 to-orange-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">fuba market haqida</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Fuba market haqida</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Biz dunyo bo'ylab ishonchli sotuvchilardan eng yaxshi mahsulotlarni sizga yetkazishga ishtiyoq bilan qaratilganmiz.
+              Fuba Market — bu 2025 yilda tashkil topgan zamonaviy onlayn bozor bo&apos;lib, bizning maqsadimiz — har bir mijozga ishonchli sotuvchilardan sifatli mahsulotlarni qulay narxda yetkazishdir.
             </p>
           </div>
         </div>
@@ -18,22 +18,19 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Bizning hikoyamiz</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">🧭 Bizning hikoyamiz</h2>
               <p className="text-gray-600 mb-4">
-                Founded in 2020, fuba market started as a small marketplace with a big vision: to connect customers
-                with unique, high-quality products from independent vendors and artisans.
+                Fuba Market kichik jamoa sifatida boshlanib, bugun minglab mijozlar va yetkazib beruvchilarni birlashtirgan yirik savdo platformasiga aylandi.
               </p>
               <p className="text-gray-600 mb-4">
-                What began as a passion project has grown into a thriving community of over 500 vendors and thousands of
-                satisfied customers worldwide.
+                Har bir mahsulot — bizning jamoamizning mehnati va mijozlar ehtiyojini chuqur tushunish natijasidir.
               </p>
               <p className="text-gray-600">
-                We believe in supporting small businesses and providing a platform where creativity and quality
-                craftsmanship can flourish.
+                Biz tezkor yetkazib berish, professional qo&apos;llab-quvvatlash va halollik tamoyillariga sodiqmiz.
               </p>
             </div>
             <div className="relative">
-              <img src="/modern-office-space-with-diverse-team-working.png" alt="Our team at work" className="rounded-lg shadow-lg" />
+              <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop&crop=center" alt="Fuba Market jamoasi" className="rounded-lg shadow-lg w-full h-auto" />
             </div>
           </div>
         </div>
@@ -43,11 +40,11 @@ export default function AboutPage() {
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Bizning qadriyatlarimiz</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">💎 Bizning qadriyatlarimiz</h2>
             <p className="text-xl text-gray-600">Har kuni bizni rivojlantiruvchi narsalar</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,9 +56,9 @@ export default function AboutPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Sifat birinchi o'rinda</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Ishonchlilik</h3>
               <p className="text-gray-600">
-                We carefully curate every product to ensure it meets our high standards for quality and craftsmanship.
+                Har bir buyurtma biz uchun mas&apos;uliyat.
               </p>
             </div>
 
@@ -76,9 +73,9 @@ export default function AboutPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Jamiyat</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Sifat</h3>
               <p className="text-gray-600">
-                We foster a supportive community where vendors and customers can connect and grow together.
+                Faqat sinovdan o&apos;tgan mahsulotlar.
               </p>
             </div>
 
@@ -93,43 +90,34 @@ export default function AboutPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Ishonch va xavfsizlik</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Tezlik</h3>
               <p className="text-gray-600">
-                Your security and privacy are paramount. We use industry-leading security measures to protect your data.
+                Har kuni minglab mijozlarga tezkor yetkazib berish.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Mijoz mamnuniyati</h3>
+              <p className="text-gray-600">
+                Bizning eng katta muvaffaqiyatimiz.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Jamoamiz bilan tanishing</h2>
-                          <p className="text-xl text-gray-600">fuba market ortidagi odamlar</p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              { name: "Sarah Johnson", role: "CEO & Founder", image: "/professional-ceo-portrait.png" },
-              { name: "Michael Chen", role: "CTO", image: "/professional-cto-portrait.png" },
-              { name: "Emily Rodriguez", role: "Head of Marketing", image: "/marketing-director-portrait.png" },
-              { name: "David Kim", role: "Customer Success", image: "/professional-man-customer-service-portrait.png" },
-            ].map((member, index) => (
-              <div key={index} className="text-center">
-                <img
-                  src={member.image || "/placeholder.svg"}
-                  alt={member.name}
-                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
-                />
-                <h3 className="text-lg font-semibold text-gray-900">{member.name}</h3>
-                <p className="text-gray-600">{member.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      
     </div>
   )
 }

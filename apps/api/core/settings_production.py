@@ -15,7 +15,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-producti
 ALLOWED_HOSTS = ['fubamarket.com', 'www.fubamarket.com', 'localhost', '127.0.0.1']
 
 # CSRF trusted origins (HTTPS in production)
-CSRF_TRUSTED_ORIGINS = ['https://fubamarket.com', 'https://www.fubamarket.com']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'https://www.fubamarket.com']
 
 # Database
 DATABASES = {
@@ -47,7 +47,7 @@ X_FRAME_OPTIONS = 'DENY'
 # CORS settings
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'https://fubamarket.com,https://www.fubamarket.com,http://localhost:3000'
+    'http://127.0.0.1:8000,https://www.fubamarket.com,http://localhost:3000'
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
 

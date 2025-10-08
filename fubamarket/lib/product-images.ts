@@ -16,7 +16,10 @@ export function getProductImage(product: any): string {
         return firstPhoto.image
       }
       // Если это относительный путь, добавляем базовый URL API
-      return `https://fubamarket.com/${firstPhoto.image}`
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://fubamarket.com' 
+        : 'http://127.0.0.1:8000'
+      return `${baseUrl}/${firstPhoto.image}`
     }
   }
 

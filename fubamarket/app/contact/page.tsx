@@ -122,34 +122,6 @@ export default function ContactPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Bog'lanish</h2>
 
               <div className="space-y-8">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-orange-100 p-3 rounded-full">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Manzil</h3>
-                    <p className="text-gray-600">
-                      123 Commerce Street
-                      <br />
-                      New York, NY 10001
-                      <br />
-                      United States
-                    </p>
-                  </div>
-                </div>
 
                 <div className="flex items-start space-x-4">
                   <div className="bg-orange-100 p-3 rounded-full">
@@ -163,8 +135,8 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Telefon</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Telefon raqam</h3>
+                    <p className="text-gray-600">+998 78 555 01 06</p>
                   </div>
                 </div>
 
@@ -181,7 +153,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">Email</h3>
-                    <p className="text-gray-600">hello@fubamarket.com</p>
+                    <p className="text-gray-600">fubamarket05@gmail.com</p>
                   </div>
                 </div>
 
@@ -199,11 +171,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">Ish vaqti</h3>
                     <p className="text-gray-600">
-                      Monday - Friday: 9:00 AM - 6:00 PM
-                      <br />
-                      Saturday: 10:00 AM - 4:00 PM
-                      <br />
-                      Sunday: Closed
+                      Dushanbadan shanbagacha 10:00 - 22:00
                     </p>
                   </div>
                 </div>

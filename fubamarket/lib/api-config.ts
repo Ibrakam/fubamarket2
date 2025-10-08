@@ -1,7 +1,16 @@
 // API Configuration
 // This file centralizes all API endpoints and makes them configurable
 
-const API_BASE_URL = "https://fubamarket.com"
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? "https://fubamarket.com" 
+  : "http://127.0.0.1:8000"
+
+// Helper function to get API base URL
+export const getApiBaseUrl = () => {
+  return process.env.NODE_ENV === 'production' 
+    ? "https://fubamarket.com" 
+    : "http://127.0.0.1:8000"
+}
 
 export const API_ENDPOINTS = {
   // Base URL

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Package, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface OrderItem {
   id: number
@@ -41,7 +42,7 @@ export default function OrdersPage() {
       
       try {
         const token = localStorage.getItem('access_token')
-        const response = await fetch('https://fubamarket.com//api/vendor/orders', {
+        const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/vendor/orders`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

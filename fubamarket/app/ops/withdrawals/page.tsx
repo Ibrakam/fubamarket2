@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Download, Check, X, DollarSign, Clock, AlertCircle } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface WithdrawalRequest {
   id: number
@@ -45,7 +46,7 @@ export default function OpsWithdrawalsPage() {
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('https://fubamarket.com//api/ops/withdrawals', {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/ops/withdrawals`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -64,7 +65,7 @@ export default function OpsWithdrawalsPage() {
 
   const processWithdrawal = async (withdrawalId: number, status: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`https://fubamarket.com//api/ops/withdrawals/${withdrawalId}/process`, {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/ops/withdrawals/${withdrawalId}/process`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

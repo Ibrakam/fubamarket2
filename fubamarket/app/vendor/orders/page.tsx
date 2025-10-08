@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Download, Eye, Edit, Package, Truck, CheckCircle, X } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface Order {
   id: number
@@ -52,7 +53,7 @@ export default function VendorOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('https://fubamarket.com//api/vendor/orders', {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/vendor/orders`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -71,7 +72,7 @@ export default function VendorOrdersPage() {
 
   const updateOrderStatus = async (orderId: number, status: string) => {
     try {
-      const response = await fetch(`https://fubamarket.com//api/vendor/orders/${orderId}/status`, {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/vendor/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

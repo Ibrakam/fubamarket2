@@ -29,7 +29,7 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = ['fubamarket.com', 'www.fubamarket.com', 'localhost', '127.0.0.1']
 
 # CSRF trusted origins (HTTPS in production)
-CSRF_TRUSTED_ORIGINS = ['https://fubamarket.com', 'https://www.fubamarket.com']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'https://www.fubamarket.com']
 
 
 # Application definition

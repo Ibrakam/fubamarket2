@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Filter, Download, Plus, DollarSign, Clock, Check, X, AlertCircle } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface WithdrawalRequest {
   id: number
@@ -43,7 +44,7 @@ export default function VendorWithdrawalsPage() {
 
   const fetchWithdrawals = async () => {
     try {
-      const response = await fetch('https://fubamarket.com//api/vendor/withdrawals', {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/vendor/withdrawals`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -62,7 +63,7 @@ export default function VendorWithdrawalsPage() {
 
   const createWithdrawal = async () => {
     try {
-      const response = await fetch('https://fubamarket.com//api/vendor/withdrawals/create', {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/vendor/withdrawals/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

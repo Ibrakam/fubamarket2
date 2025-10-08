@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useAuth } from "@/contexts/auth-context"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface User {
   id: number
@@ -63,7 +64,7 @@ export function EditUserModal({ isOpen, onClose, user, onUserUpdated }: EditUser
 
     setLoading(true)
     try {
-      const response = await fetch(`https://fubamarket.com//api/admin/users/${user.id}`, {
+      const response = await fetch(`${API_ENDPOINTS.API_BASE_URL}/api/admin/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
