@@ -56,7 +56,9 @@ export default function CheckoutPage() {
           price: item.price // Цена уже в сумах, не нужно конвертировать
         })),
         total_amount: total, // Цена уже в сумах, не нужно конвертировать
-        shipping_address: `${orderData.address}, ${orderData.city}, ${orderData.postalCode}, ${orderData.country}`,
+        customer_name: `${orderData.firstName} ${orderData.lastName}`.trim(),
+        customer_phone: orderData.phone,
+        customer_address: `${orderData.address}, ${orderData.city}, ${orderData.postalCode}, ${orderData.country}`,
         payment_method: orderData.paymentMethod,
         notes: orderData.notes
       }
