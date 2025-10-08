@@ -82,7 +82,10 @@ export default function TestApiPage() {
           <button 
             onClick={async () => {
               try {
-                const response = await fetch('/api/referral/create-link', {
+                const backendUrl = process.env.NODE_ENV === 'production' 
+                  ? 'https://fubamarket.com' 
+                  : 'http://127.0.0.1:8000'
+                const response = await fetch(`${backendUrl}/api/referral-links/create/`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
