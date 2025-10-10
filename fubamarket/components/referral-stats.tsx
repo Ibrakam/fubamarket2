@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, Users, DollarSign, Target, Link as LinkIcon } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface ReferralStats {
   total_links: number
@@ -32,7 +33,7 @@ export default function ReferralStats() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/market/referral-stats/')
+      const response = await fetch(API_ENDPOINTS.REFERRAL_STATS)
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -44,7 +45,7 @@ export default function ReferralStats() {
 
   const fetchBalance = async () => {
     try {
-      const response = await fetch('/api/market/referral-balance/')
+      const response = await fetch(API_ENDPOINTS.REFERRAL_BALANCE)
       if (response.ok) {
         const data = await response.json()
         setBalance(data)

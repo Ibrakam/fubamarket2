@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Search, Filter, Download, Eye, Edit, Package, Truck, CheckCircle, AlertCircle } from "lucide-react"
 import API_ENDPOINTS from "@/lib/api-config"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface Order {
   id: number
@@ -262,7 +263,7 @@ export default function OpsOrdersPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Jami summa</p>
-                  <p className="font-medium text-lg">${(parseFloat(order.total_amount) / 100).toFixed(2)}</p>
+                  <p className="font-medium text-lg">{formatUzsWithSpaces(parseFloat(order.total_amount))}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Sana</p>
@@ -276,7 +277,7 @@ export default function OpsOrdersPage() {
                   {order.items?.map((item) => (
                     <div key={item.id} className="flex items-center justify-between text-sm">
                       <span>{item.product_title} x {item.quantity}</span>
-                      <span>${(parseFloat(item.price) / 100).toFixed(2)}</span>
+                      <span>{formatUzsWithSpaces(parseFloat(item.price))}</span>
                     </div>
                   ))}
                 </div>

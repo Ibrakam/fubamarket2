@@ -4,6 +4,8 @@ import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MapPin, Phone, Calendar, Package, CreditCard } from "lucide-react"
+import { formatUzsWithSpaces } from "@/lib/currency"
+import { getProductImage } from "@/lib/product-images"
 
 interface OrderDetailsModalProps {
   isOpen: boolean
@@ -90,7 +92,7 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Amount:</span>
                 <span className="font-semibold text-lg">
-                  ${(parseFloat(order.total_amount) / 100).toFixed(2)}
+                  {formatUzsWithSpaces(parseFloat(order.total_amount))}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -110,29 +112,44 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
           <h4 className="font-medium text-lg">Order Items</h4>
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 border-b">
-              <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-600">
+              <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-600">
                 <span>Product</span>
+                <span>Photo</span>
                 <span>Price</span>
                 <span>Quantity</span>
                 <span>Total</span>
               </div>
             </div>
             <div className="divide-y">
-              {order.items?.map((item: any, index: number) => (
-                <div key={item.id || index} className="px-4 py-3">
-                  <div className="grid grid-cols-4 gap-4 items-center">
-                    <div>
-                      <p className="font-medium">{item.product?.title || item.product_title}</p>
-                      <p className="text-sm text-gray-600">ID: {item.product?.id || item.product}</p>
+              {order.items?.map((item: any, index: number) => {
+                const productImage = item.product?.photos?.[0]?.image_url || 
+                                   item.product?.photos?.[0]?.image || 
+                                   getProductImage(item.product) || 
+                                   '/1-100.jpg'
+                
+                return (
+                  <div key={item.id || index} className="px-4 py-3">
+                    <div className="grid grid-cols-5 gap-4 items-center">
+                      <div>
+                        <p className="font-medium">{item.product?.title || item.product_title}</p>
+                        <p className="text-sm text-gray-600">ID: {item.product?.id || item.product}</p>
+                      </div>
+                      <div className="flex justify-center">
+                        <img 
+                          src={productImage} 
+                          alt={item.product?.title || item.product_title}
+                          className="w-12 h-12 object-cover rounded-lg"
+                        />
+                      </div>
+                      <span>{formatUzsWithSpaces(parseFloat(item.price))}</span>
+                      <span>{item.quantity}</span>
+                      <span className="font-medium">
+                        {formatUzsWithSpaces(parseFloat(item.price) * item.quantity)}
+                      </span>
                     </div>
-                    <span>${(parseFloat(item.price) / 100).toFixed(2)}</span>
-                    <span>{item.quantity}</span>
-                    <span className="font-medium">
-                      ${((parseFloat(item.price) * item.quantity) / 100).toFixed(2)}
-                    </span>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>

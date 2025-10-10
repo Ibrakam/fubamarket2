@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Package, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import API_ENDPOINTS from "@/lib/api-config"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface OrderItem {
   id: number
@@ -181,7 +182,7 @@ export default function OrdersPage() {
                           {order.items.map((item) => (
                             <div key={item.id} className="flex justify-between text-sm">
                               <span>{item.product.title} × {item.quantity}</span>
-                              <span>${(parseFloat(item.price) / 100).toFixed(2)}</span>
+                              <span>{formatUzsWithSpaces(parseFloat(item.price))}</span>
                             </div>
                           ))}
                         </div>
@@ -189,7 +190,7 @@ export default function OrdersPage() {
                       <div>
                         <h4 className="font-medium text-gray-900 mb-2">Buyurtma haqida ma'lumot:</h4>
                         <div className="space-y-1 text-sm text-gray-600">
-                          <p><strong>Summa:</strong> ${(parseFloat(order.total_amount) / 100).toFixed(2)}</p>
+                          <p><strong>Summa:</strong> {formatUzsWithSpaces(parseFloat(order.total_amount))}</p>
                           <p><strong>To'lov:</strong> {order.payment_method === 'cash' ? 'Naqd pul' : 'Karta'}</p>
                           <p><strong>Manzil:</strong> {order.shipping_address}</p>
                           {order.notes && (

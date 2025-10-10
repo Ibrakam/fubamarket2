@@ -77,6 +77,11 @@ export default function ProductDetailPage() {
         }
         
         setProduct(productData)
+        
+        // Автоматически добавляем товар в корзину и переходим к оформлению
+        addToCart(productData)
+        router.push('/checkout')
+        
       } catch (err) {
         console.error("Error fetching product:", err)
         setError(err instanceof Error ? err.message : "Failed to load product")
@@ -88,7 +93,7 @@ export default function ProductDetailPage() {
     if (params.id) {
       fetchProduct()
     }
-  }, [params.id])
+  }, [params.id, addToCart, router])
 
   useEffect(() => {
     const fetchRelatedProducts = async () => {

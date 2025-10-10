@@ -23,9 +23,7 @@ export default function LoginPage() {
     const success = await login(username, password)
     if (success) {
       // Перенаправляем на нужную страницу после входа
-      if (redirect === 'cart') {
-        router.push("/cart")
-      } else if (redirect === 'checkout') {
+      if (redirect === 'checkout') {
         router.push("/checkout")
       } else {
         router.push("/")

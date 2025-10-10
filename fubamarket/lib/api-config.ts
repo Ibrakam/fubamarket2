@@ -20,7 +20,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/auth/login/`,
   REGISTER: `${API_BASE_URL}/api/auth/register/`,
   PROFILE: `/api/auth/user`, // Use Next.js API route
-  REFRESH: `${API_BASE_URL}/api/auth/refresh/`,
+  // REFRESH: `${API_BASE_URL}/api/auth/refresh/`, // Not implemented in backend
   
   // Product endpoints
   PRODUCTS: `${API_BASE_URL}/api/products`,
@@ -67,8 +67,8 @@ export const API_ENDPOINTS = {
   OPS_WITHDRAWALS: `${API_BASE_URL}/api/admin/withdrawals/`,
   OPS_PROCESS_WITHDRAWAL: (id: string) => `${API_BASE_URL}/api/withdrawals/${id}/process/`,
   
-  // Stats endpoint
-  STATS: `${API_BASE_URL}/api/stats`,
+  // Stats endpoint (using admin dashboard for now)
+  STATS: `${API_BASE_URL}/api/admin/dashboard/`,
   
   // Referral endpoints
   REFERRAL_LINKS: `${API_BASE_URL}/api/referral-links/`,

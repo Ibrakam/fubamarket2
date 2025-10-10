@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
@@ -8,14 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, CreditCard, MapPin, User } from "lucide-react"
+import { ArrowLeft, MapPin } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import API_ENDPOINTS from "@/lib/api-config"
 import { formatUzsWithSpaces } from "@/lib/currency"
 
 export default function CheckoutPage() {
+  const router = useRouter()
   const { items, total, itemCount, clearCart } = useCart()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -151,12 +152,10 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center mb-8">
-            <Link href="/cart">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Savatga qaytish
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm" onClick={() => router.push('/')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Bosh sahifaga qaytish
+            </Button>
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Buyurtma berish</h1>

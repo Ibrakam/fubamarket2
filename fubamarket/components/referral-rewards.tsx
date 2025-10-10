@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, Calendar, DollarSign, Package, User } from "lucide-react"
+import API_ENDPOINTS from "@/lib/api-config"
 
 interface ReferralReward {
   id: number
@@ -60,7 +61,7 @@ export default function ReferralRewards() {
 
   const fetchRewards = async () => {
     try {
-      const response = await fetch('/api/market/referral-rewards/')
+      const response = await fetch(API_ENDPOINTS.REFERRAL_PAYOUTS)
       if (response.ok) {
         const data = await response.json()
         setRewards(data)

@@ -4,13 +4,8 @@ import type React from "react"
 
 import { useCart, type Product } from "@/contexts/cart-context"
 import { useWishlist } from "@/contexts/wishlist-context"
-import { Button } from "@/components/ui/button"
-import { AnimatedButton } from "@/components/ui/animated-button"
-import { AnimatedCard } from "@/components/ui/animated-card"
-import { AnimatedIcon } from "@/components/ui/animated-icon"
 import { Heart, Star, ShoppingCart, TrendingUp, Users, Percent, Share2, Sparkles, Zap } from "lucide-react"
 import { useState, useEffect, useCallback, useMemo } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getProductImage } from "@/lib/product-images"
 import { formatUzsWithSpaces } from "@/lib/currency"
@@ -44,8 +39,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     setIsAddingToCart(true)
     addItem(product)
     // Simulate loading state
-    setTimeout(() => setIsAddingToCart(false), 500)
-  }, [addItem, product])
+    setTimeout(() => {
+      setIsAddingToCart(false)
+      // Переходим сразу к оформлению заказа
+      router.push('/checkout')
+    }, 500)
+  }, [addItem, product, router])
 
   const handleWishlistToggle = useCallback((e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking wishlist
@@ -117,13 +116,17 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     [product.referral_commission]
   )
 
-  const handleProductClick = (e: React.MouseEvent) => {
-    // Разрешаем просмотр продукта без авторизации
-  }
 
   return (
     <div className="group relative bg-white rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100/50 hover:border-orange-200/50 hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-[1.01] sm:hover:scale-[1.02] backdrop-blur-sm">
-      <Link href={`/product/${product.id}`} className="block" onClick={handleProductClick}>
+      <div 
+        onClick={() => {
+          addItem(product)
+          // Переходим сразу к оформлению заказа
+          router.push('/checkout')
+        }}
+        className="block cursor-pointer"
+      >
         {/* Product Image Container */}
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           <img
@@ -146,8 +149,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             >
               <div className="flex items-center justify-center gap-1 sm:gap-2">
                 <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Tezkor ko'rish</span>
-                <span className="sm:hidden">Ko'rish</span>
+                <span className="hidden sm:inline">Tezkor ko&apos;rish</span>
+                <span className="sm:hidden">Ko&apos;rish</span>
               </div>
             </button>
           </div>
@@ -158,7 +161,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-2xl text-sm font-semibold shadow-xl">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  <span>Omborda yo'q</span>
+                  <span>Omborda yo&apos;q</span>
                 </div>
               </div>
             </div>
@@ -262,7 +265,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             </div>
           )}
         </div>
-      </Link>
+      </div>
 
       {/* Action Buttons - Outside of Link - Only show for authenticated users */}
       {isAuthenticated && (
@@ -299,17 +302,17 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             {isAddingToCart ? (
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 sm:border-3 border-white border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm sm:text-lg">Qo'shilmoqda...</span>
+                <span className="text-sm sm:text-lg">Qo&apos;shilmoqda...</span>
               </div>
             ) : !product.inStock ? (
               <div className="flex items-center gap-1 sm:gap-2">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
-                <span className="text-sm sm:text-lg">Omborda yo'q</span>
+                <span className="text-sm sm:text-lg">Omborda yo&apos;q</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 sm:gap-3">
                 <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span className="text-sm sm:text-lg">Savatchaga qo'shish</span>
+                <span className="text-sm sm:text-lg">Savatchaga qo&apos;shish</span>
               </div>
             )}
           </button>

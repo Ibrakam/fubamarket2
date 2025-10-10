@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import API_ENDPOINTS from "@/lib/api-config"
 import { DollarSign, CreditCard, AlertCircle, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 
@@ -62,7 +63,7 @@ export default function ReferralPayoutRequest() {
 
   const fetchBalance = async () => {
     try {
-      const response = await fetch('/api/market/referral-balance/')
+      const response = await fetch(API_ENDPOINTS.REFERRAL_BALANCE)
       if (response.ok) {
         const data = await response.json()
         setBalance(data)
@@ -74,7 +75,7 @@ export default function ReferralPayoutRequest() {
 
   const fetchPayouts = async () => {
     try {
-      const response = await fetch('/api/market/referral-payouts/')
+      const response = await fetch(API_ENDPOINTS.REFERRAL_PAYOUTS)
       if (response.ok) {
         const data = await response.json()
         setPayouts(data)
@@ -109,7 +110,7 @@ export default function ReferralPayoutRequest() {
     setSubmitting(true)
     
     try {
-      const response = await fetch('/api/market/referral-payouts/', {
+      const response = await fetch(API_ENDPOINTS.REFERRAL_PAYOUTS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

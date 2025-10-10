@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Loader2 } from "lucide-react"
+import { formatUzsWithSpaces } from "@/lib/currency"
 
 interface OrderStatusModalProps {
   isOpen: boolean
@@ -46,7 +47,7 @@ export function OrderStatusModal({ isOpen, onClose, order, onStatusUpdate }: Ord
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-medium mb-2">Order #{order?.public_id}</h3>
           <p className="text-sm text-gray-600">{order?.customer_name}</p>
-          <p className="text-sm text-gray-600">${order ? (parseFloat(order.total_amount) / 100).toFixed(2) : "0.00"}</p>
+          <p className="text-sm text-gray-600">{order ? formatUzsWithSpaces(parseFloat(order.total_amount)) : "0 so'm"}</p>
         </div>
 
         {/* Current Status */}
