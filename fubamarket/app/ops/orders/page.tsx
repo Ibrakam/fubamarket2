@@ -64,7 +64,11 @@ export default function OpsOrdersPage() {
       
       if (response.ok) {
         const data = await response.json()
-        setOrders(data.orders || [])
+        // Сортируем заказы по дате создания (новые сверху)
+        const sortedOrders = (data.orders || []).sort((a: any, b: any) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        setOrders(sortedOrders)
       }
     } catch (error) {
       console.error('Error fetching orders:', error)

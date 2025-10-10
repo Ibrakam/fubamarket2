@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useCart, type Product } from "@/contexts/cart-context"
 import { useWishlist } from "@/contexts/wishlist-context"
-import { Heart, Star, ShoppingCart, TrendingUp, Users, Percent, Share2, Sparkles, Zap } from "lucide-react"
+import { Heart, Star, TrendingUp, Users, Percent, Share2, Sparkles, Zap } from "lucide-react"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { getProductImage } from "@/lib/product-images"
@@ -18,7 +18,6 @@ interface ProductCardProps {
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { addItem } = useCart()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
 
@@ -33,18 +32,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     setIsAuthenticated(!!(token && user))
   }, [])
 
-  const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent navigation when clicking add to cart
-    
-    setIsAddingToCart(true)
-    addItem(product)
-    // Simulate loading state
-    setTimeout(() => {
-      setIsAddingToCart(false)
-      // Переходим сразу к оформлению заказа
-      router.push('/checkout')
-    }, 500)
-  }, [addItem, product, router])
 
   const handleWishlistToggle = useCallback((e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking wishlist
@@ -284,40 +271,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
       )}
 
-      {/* Add to Cart Button - Fixed at bottom - Only show for authenticated users */}
+      {/* Referral Link Button - Only show for authenticated users */}
       {isAuthenticated && (
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
-          <button
-            onClick={handleAddToCart}
-            disabled={isAddingToCart || !product.inStock}
-            className={`w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-white shadow-xl hover:shadow-2xl relative overflow-hidden group ${
-              isAddingToCart || !product.inStock
-                ? "bg-gradient-to-r from-gray-400 to-gray-500"
-                : "bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800"
-            }`}
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            
-            {isAddingToCart ? (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 sm:border-3 border-white border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm sm:text-lg">Qo&apos;shilmoqda...</span>
-              </div>
-            ) : !product.inStock ? (
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
-                <span className="text-sm sm:text-lg">Omborda yo&apos;q</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span className="text-sm sm:text-lg">Savatchaga qo&apos;shish</span>
-              </div>
-            )}
-          </button>
-          
-          {/* Referral Link Button */}
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
           <button
             onClick={handleCreateReferralLink}
             className="w-full h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl font-semibold relative overflow-hidden group"

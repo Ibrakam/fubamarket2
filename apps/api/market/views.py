@@ -17,7 +17,7 @@ from .serializers import (
     ReferralProgramSerializer, ReferralLinkSerializer, ReferralLinkCreateSerializer,
     ReferralRewardSerializer, ReferralRewardUpdateSerializer, ReferralPayoutSerializer,
     ReferralPayoutCreateSerializer, ReferralBalanceSerializer, ReferralLinkStatsSerializer,
-    ProductSerializer, ProductCreateSerializer, CategorySerializer, OrderSerializer,
+    ProductSerializer, ProductCreateSerializer, CategorySerializer, OrderSerializer, OrderCreateSerializer,
     WithdrawalRequestSerializer, UserSerializer, ProductImageSerializer, ProductImageCreateSerializer, ReviewSerializer, ReviewCreateSerializer
 )
 from .referral_utils import generate_referral_code
@@ -1266,8 +1266,12 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # Order Management
 class OrderListCreateView(generics.ListCreateAPIView):
-    serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OrderCreateSerializer
+        return OrderSerializer
 
     def get_queryset(self):
         if self.request.user.role == 'superadmin':

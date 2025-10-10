@@ -394,6 +394,36 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 
+class OrderCreateSerializer(serializers.ModelSerializer):
+    items = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=True
+    )
+
+    class Meta:
+        model = Order
+        fields = [
+            'customer_name', 'customer_phone', 'customer_address', 
+            'total_amount', 'notes', 'items'
+        ]
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        order = Order.objects.create(**validated_data)
+        
+        # Создаем товары заказа
+        for item_data in items_data:
+            OrderItem.objects.create(
+                order=order,
+                product_id=item_data['product_id'],
+                quantity=item_data['quantity'],
+                price=item_data['price']
+            )
+        
+        return order
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     customer_username = serializers.CharField(source='user.username', read_only=True)
